@@ -1,0 +1,265 @@
+@page "/users"
+@attribute [Authorize(Roles = "SuperAdmin,Admin")]
+@inject IUserApiService UserApi
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Users - AlertyBlurty</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-person"></i> Users</h2>
+            <p class="text-muted">Manage user accounts and permissions</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick="NavigateToRegister">
+                <i class="bi bi-person-plus"></i> Add User
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading users...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle"></i> @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = string.Empty"></button>
+        </div>
+    }
+    else if (users == null || !users.Any())
+    {
+        <div class="card shadow">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">No Users Found</h4>
+                <p class="text-muted">There are no users in your organization yet</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Filter Tabs -->
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link @(roleFilter == null ? "active" : "")"
+                           @onclick="() => FilterByRole(null)"
+                           style="cursor: pointer;">
+                            <i class="bi bi-list"></i> All Users (@(users.Count))
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(roleFilter == UserRole.SuperAdmin ? "active" : "")"
+                           @onclick="() => FilterByRole(UserRole.SuperAdmin)"
+                           style="cursor: pointer;">
+                            <i class="bi bi-shield-check"></i> Super Admins (@superAdminCount)
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(roleFilter == UserRole.Admin ? "active" : "")"
+                           @onclick="() => FilterByRole(UserRole.Admin)"
+                           style="cursor: pointer;">
+                            <i class="bi bi-shield"></i> Admins (@adminCount)
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(roleFilter == UserRole.User ? "active" : "")"
+                           @onclick="() => FilterByRole(UserRole.User)"
+                           style="cursor: pointer;">
+                            <i class="bi bi-person"></i> Users (@userCount)
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    @if (roleFilter != null)
+                    {
+                        <span>@roleFilter Users</span>
+                    }
+                    else
+                    {
+                        <span>All Users</span>
+                    }
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone Number</th>
+                                <th>Role</th>
+                                <th>Timezone</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (filteredUsers != null)
+                            {
+                                @foreach (var user in filteredUsers)
+                                {
+                                <tr>
+                                    <td><strong>@user.FullName</strong></td>
+                                    <td>@user.Email</td>
+                                    <td>@user.PhoneNumber</td>
+                                    <td>
+                                        <span class="badge @GetRoleBadgeClass(user.Role)">
+                                            @user.Role
+                                        </span>
+                                    </td>
+                                    <td>@user.Timezone</td>
+                                    <td>
+                                        @if (user.IsActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewUser(user.Id)">
+                                            <i class="bi bi-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show mt-3">
+            <i class="bi bi-check-circle"></i> @successMessage
+            <button type="button" class="btn-close" @onclick="() => successMessage = string.Empty"></button>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private List<UserDto>? users;
+    private List<UserDto>? filteredUsers;
+    private UserRole? roleFilter = null;
+
+    private int superAdminCount = 0;
+    private int adminCount = 0;
+    private int userCount = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadUsers();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadUsers()
+    {
+        try
+        {
+            // Get current user's organization ID from auth state
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var orgIdClaim = authState.User.FindFirst("OrganizationId");
+
+            if (orgIdClaim != null && Guid.TryParse(orgIdClaim.Value, out var orgId))
+            {
+                users = await UserApi.GetByOrganizationAsync(orgId);
+
+                if (users != null)
+                {
+                    superAdminCount = users.Count(u => u.Role == UserRole.SuperAdmin);
+                    adminCount = users.Count(u => u.Role == UserRole.Admin);
+                    userCount = users.Count(u => u.Role == UserRole.User);
+
+                    ApplyFilter();
+                }
+            }
+            else
+            {
+                errorMessage = "Unable to determine your organization";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load users: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void FilterByRole(UserRole? role)
+    {
+        roleFilter = role;
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        if (users == null)
+        {
+            filteredUsers = null;
+            return;
+        }
+
+        if (roleFilter == null)
+        {
+            filteredUsers = users;
+        }
+        else
+        {
+            filteredUsers = users.Where(u => u.Role == roleFilter).ToList();
+        }
+    }
+
+    private string GetRoleBadgeClass(UserRole role)
+    {
+        return role switch
+        {
+            UserRole.SuperAdmin => "badge-alerty-red",
+            UserRole.Admin => "badge-alerty",
+            UserRole.User => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void ViewUser(Guid userId)
+    {
+        Navigation.NavigateTo($"/users/{userId}");
+    }
+
+    private void NavigateToRegister()
+    {
+        Navigation.NavigateTo("/users/create");
+    }
+}

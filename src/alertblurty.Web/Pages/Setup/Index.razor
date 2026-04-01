@@ -1,0 +1,314 @@
+@page "/setup"
+@inject IAuthApiService AuthApi
+@inject IOrganizationApiService OrgApi
+@inject NavigationManager Navigation
+@inject ITokenStorageService TokenStorage
+
+<PageTitle>Setup - AlertyBlurty</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Welcome to AlertyBlurty</h3>
+                    <small>Let's get you set up in just a few steps</small>
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Checking setup status...</p>
+                        </div>
+                    }
+                    else if (setupComplete)
+                    {
+                        <div class="alert alert-success">
+                            <h4 class="alert-heading">Setup Already Complete!</h4>
+                            <p>AlertyBlurty is already configured. You can now log in.</p>
+                            <hr>
+                            <button class="btn btn-primary" @onclick="NavigateToLogin">Go to Login</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Progress Steps -->
+                        <div class="mb-4">
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width: @((currentStep / 3.0 * 100))%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2 small text-muted">
+                                <span class="@(currentStep >= 1 ? "fw-bold" : "")">Organization</span>
+                                <span class="@(currentStep >= 2 ? "fw-bold" : "")">Admin Account</span>
+                                <span class="@(currentStep >= 3 ? "fw-bold" : "")">Complete</span>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                @errorMessage
+                                <button type="button" class="btn-close" @onclick="() => errorMessage = string.Empty"></button>
+                            </div>
+                        }
+
+                        <!-- Step 1: Organization Info -->
+                        @if (currentStep == 1)
+                        {
+                            <div class="step-content">
+                                <h4>Step 1: Organization Information</h4>
+                                <p class="text-muted">Tell us about your organization</p>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Organization Name *</label>
+                                    <input type="text" class="form-control" @bind="organizationName"
+                                           placeholder="e.g., Acme Corporation" required />
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button class="btn btn-primary" @onclick="NextStep" disabled="@string.IsNullOrWhiteSpace(organizationName)">
+                                        Next <i class="bi bi-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Step 2: Admin Account -->
+                        @if (currentStep == 2)
+                        {
+                            <div class="step-content">
+                                <h4>Step 2: Create Administrator Account</h4>
+                                <p class="text-muted">This will be the first SuperAdmin user</p>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Full Name *</label>
+                                        <input type="text" class="form-control" @bind="fullName"
+                                               placeholder="John Doe" required />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Email *</label>
+                                        <input type="email" class="form-control" @bind="email"
+                                               placeholder="admin@example.com" required />
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Password *</label>
+                                        <input type="password" class="form-control" @bind="password"
+                                               placeholder="Minimum 8 characters" required />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Confirm Password *</label>
+                                        <input type="password" class="form-control" @bind="confirmPassword"
+                                               placeholder="Re-enter password" required />
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Phone Number *</label>
+                                        <input type="tel" class="form-control" @bind="phoneNumber"
+                                               placeholder="+1 555-123-4567" required />
+                                        <small class="form-text text-muted">Used for SMS notifications</small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Timezone *</label>
+                                        <select class="form-select" @bind="timezone" required>
+                                            <option value="">Select timezone...</option>
+                                            <option value="America/New_York">Eastern Time</option>
+                                            <option value="America/Chicago">Central Time</option>
+                                            <option value="America/Denver">Mountain Time</option>
+                                            <option value="America/Los_Angeles">Pacific Time</option>
+                                            <option value="UTC">UTC</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between gap-2">
+                                    <button class="btn btn-secondary" @onclick="PreviousStep">
+                                        <i class="bi bi-arrow-left"></i> Back
+                                    </button>
+                                    <button class="btn btn-primary" @onclick="CompleteSetup" disabled="@(!CanCompleteSetup() || isSubmitting)">
+                                        @if (isSubmitting)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                            <span>Creating...</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Complete Setup <i class="bi bi-check-circle"></i></span>
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Step 3: Success -->
+                        @if (currentStep == 3)
+                        {
+                            <div class="step-content text-center py-4">
+                                <div class="text-success mb-3">
+                                    <i class="bi bi-check-circle" style="font-size: 4rem;"></i>
+                                </div>
+                                <h4>Setup Complete!</h4>
+                                <p class="text-muted">Your AlertyBlurty instance is ready to use.</p>
+                                <p>Organization: <strong>@organizationName</strong></p>
+                                <p>Admin: <strong>@fullName</strong> (@email)</p>
+                                <hr class="my-4">
+                                <button class="btn btn-primary btn-lg" @onclick="NavigateToDashboard">
+                                    Go to Dashboard <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isLoading = true;
+    private bool setupComplete = false;
+    private bool isSubmitting = false;
+    private int currentStep = 1;
+    private string errorMessage = string.Empty;
+
+    // Step 1
+    private string organizationName = string.Empty;
+
+    // Step 2
+    private string fullName = string.Empty;
+    private string email = string.Empty;
+    private string password = string.Empty;
+    private string confirmPassword = string.Empty;
+    private string phoneNumber = string.Empty;
+    private string timezone = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Check if setup is already complete
+            try
+            {
+                setupComplete = await OrgApi.HasOrganizationsAsync();
+            }
+            catch
+            {
+                setupComplete = false;
+            }
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void NextStep()
+    {
+        errorMessage = string.Empty;
+        currentStep++;
+    }
+
+    private void PreviousStep()
+    {
+        errorMessage = string.Empty;
+        currentStep--;
+    }
+
+    private bool CanCompleteSetup()
+    {
+        return !string.IsNullOrWhiteSpace(organizationName) &&
+               !string.IsNullOrWhiteSpace(fullName) &&
+               !string.IsNullOrWhiteSpace(email) &&
+               !string.IsNullOrWhiteSpace(password) &&
+               !string.IsNullOrWhiteSpace(confirmPassword) &&
+               !string.IsNullOrWhiteSpace(phoneNumber) &&
+               !string.IsNullOrWhiteSpace(timezone) &&
+               password == confirmPassword &&
+               password.Length >= 8;
+    }
+
+    private async Task CompleteSetup()
+    {
+        if (!CanCompleteSetup())
+        {
+            errorMessage = "Please fill in all required fields correctly.";
+            return;
+        }
+
+        if (password != confirmPassword)
+        {
+            errorMessage = "Passwords do not match.";
+            return;
+        }
+
+        if (password.Length < 8)
+        {
+            errorMessage = "Password must be at least 8 characters long.";
+            return;
+        }
+
+        isSubmitting = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var registerRequest = new alertblurty.Models.Requests.Auth.RegisterRequest
+            {
+                Email = email,
+                Password = password,
+                FullName = fullName,
+                PhoneNumber = phoneNumber,
+                Timezone = timezone,
+                OrganizationName = organizationName
+            };
+
+            var result = await AuthApi.RegisterAsync(registerRequest);
+
+            if (result != null)
+            {
+                // Store the token
+                await TokenStorage.SetTokenAsync(result.Token);
+
+                // Move to success step
+                currentStep = 3;
+            }
+            else
+            {
+                errorMessage = "Failed to create organization. The API returned no data. Please check that the API is running on http://localhost:5041";
+            }
+        }
+        catch (HttpRequestException httpEx)
+        {
+            errorMessage = $"Connection Error: Unable to reach the API at http://localhost:5041. Please ensure the API is running. Details: {httpEx.Message}";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.GetType().Name} - {ex.Message}";
+            if (ex.InnerException != null)
+            {
+                errorMessage += $"\nInner Error: {ex.InnerException.Message}";
+            }
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void NavigateToLogin()
+    {
+        Navigation.NavigateTo("/login");
+    }
+
+    private void NavigateToDashboard()
+    {
+        Navigation.NavigateTo("/");
+    }
+}
