@@ -1,0 +1,68 @@
+{
+  "agents": {
+    "description": "3-agent consolidated architecture for improved performance",
+    "primary": ["research-innovate", "plan-execute", "review"]
+  },
+  "commands": {
+    "description": "RIPER mode control and memory bank operations",
+    "namespaces": ["riper", "memory"]
+  },
+  "memory-bank": {
+    "auto-backup": true,
+    "branch-aware": true,
+    "directories": {
+      "backups": "backups",
+      "plans": "{branch}/plans",
+      "reviews": "{branch}/reviews",
+      "root": ".claude/memory-bank",
+      "sessions": "{branch}/sessions"
+    },
+    "enabled": true
+  },
+  "project-context": {
+    "important-paths": {
+      "comment": "Standardized paths for Eric Paul's .NET-based projects",
+      "main": "src",
+      "tests": "tests",
+      "docs": "docs",
+      "logs": "logs",
+      "scripts": "scripts",
+      "docker": "docker"
+    },
+    "key-patterns": [
+      "ILogger", 
+      "IService", 
+      "NLog", 
+      "Polly", 
+      "HttpClient", 
+      "PostgreSQL", 
+      "DependencyInjection", 
+      "Response.Headers.Append"
+    ],
+    "tech-stack": [
+      ".NET 8",
+      "C#",
+      "NLog",
+      "Polly",
+      "PostgreSQL",
+      "Docker",
+      "Jenkins",
+      "Octopus Deploy",
+      "AWS",
+      "DigitalOcean",
+      "RabbitMQ",
+      "OpenAI-dotnet",
+      "React",
+      "Bootstrap",
+      "Elasticsearch (NEST 7.17.5)",
+      "Qdrant"
+    ]
+  },
+  "reference-docs": [
+    ".claude/project-info.md",
+    "docs/architecture.md",
+    "docs/setup.md"
+  ],
+  "version": "1.0.0",
+  "workflow": "RIPER"
+}

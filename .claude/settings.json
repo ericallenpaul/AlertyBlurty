@@ -1,0 +1,8 @@
+{
+  "hooks": {},
+  "instructions": "This project uses the RIPER workflow with 3 consolidated agents (research-innovate, plan-execute, review). See .claude/project-info.md for detailed context.",
+  "project": {
+    "description": "**alertblurty** is a **single-tenant**, self-hosted on-call alert router that works alongside **Zabbix 7.4**. It receives **webhooks from Zabbix**, groups related events (by **host + trigger**) into a single incident, and notifies the active **on-call user** via **Twilio SMS**. When a user **acknowledges** an incident in alertblurty, the app **acknowledges it in Zabbix via API token** and stops further notifications for that grouped incident. alertblurty does **not** implement its own escalation or re-notify logic—**Zabbix controls escalation**; the app reflects state and enables simple, reliable ack + audit.",
+    "name": "alertblurty"
+  }
+}

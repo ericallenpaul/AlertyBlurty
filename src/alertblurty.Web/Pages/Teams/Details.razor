@@ -1,0 +1,455 @@
+@page "/teams/{id:guid}"
+@attribute [Authorize]
+@inject ITeamApiService TeamApi
+@inject IUserApiService UserApi
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Team Details - AlertyBlurty</PageTitle>
+
+<div class="container-fluid mt-4">
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading team details...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> @errorMessage
+        </div>
+        <button class="btn btn-secondary" @onclick="NavigateBack">
+            <i class="bi bi-arrow-left"></i> Back to Teams
+        </button>
+    }
+    else if (team != null)
+    {
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <button class="btn btn-secondary mb-3" @onclick="NavigateBack">
+                    <i class="bi bi-arrow-left"></i> Back to Teams
+                </button>
+                <h2>
+                    <i class="bi bi-people"></i> @team.Name
+                </h2>
+                @if (!string.IsNullOrEmpty(team.Description))
+                {
+                    <p class="text-muted">@team.Description</p>
+                }
+            </div>
+            <div class="col-auto">
+                <AuthorizeView Roles="SuperAdmin,Admin">
+                    <button class="btn btn-outline-danger" @onclick="DeleteTeam" disabled="@isDeleting">
+                        @if (isDeleting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Deleting...</span>
+                        }
+                        else
+                        {
+                            <span><i class="bi bi-trash"></i> Delete Team</span>
+                        }
+                    </button>
+                </AuthorizeView>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column: Team Info & Members -->
+            <div class="col-lg-8">
+                <!-- Team Info Card -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Team Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="text-muted small">Team Name</label>
+                                <p class="mb-0"><strong>@team.Name</strong></p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="text-muted small">Requires Admin Approval for Swaps</label>
+                                <p class="mb-0">
+                                    @if (team.RequireAdminApprovalForSwaps)
+                                    {
+                                        <span class="badge bg-warning text-dark">Yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">No</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(team.Description))
+                        {
+                            <div class="mb-3">
+                                <label class="text-muted small">Description</label>
+                                <p class="mb-0">@team.Description</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Team Members Card -->
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Team Members (@(members?.Count ?? 0))</h5>
+                        <AuthorizeView Roles="SuperAdmin,Admin">
+                            <button class="btn btn-light btn-sm" @onclick="ShowAddMemberModal">
+                                <i class="bi bi-person-plus"></i> Add Member
+                            </button>
+                        </AuthorizeView>
+                    </div>
+                    <div class="card-body">
+                        @if (members == null || !members.Any())
+                        {
+                            <div class="text-center py-4">
+                                <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                                <p class="mt-3 text-muted">No members yet. Add team members to get started.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var member in members.OrderBy(m => m.RotationOrder))
+                                {
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>@member.UserFullName</strong>
+                                            <br />
+                                            <small class="text-muted">@member.UserEmail</small>
+                                        </div>
+                                        <div>
+                                            <span class="badge badge-alerty me-2">Order: @member.RotationOrder</span>
+                                            @if (member.IsActive)
+                                            {
+                                                <span class="badge bg-success me-2">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary me-2">Inactive</span>
+                                            }
+                                            <AuthorizeView Roles="SuperAdmin,Admin">
+                                                <button class="btn btn-sm btn-outline-danger"
+                                                        @onclick="() => RemoveMember(member.UserId)"
+                                                        disabled="@isRemovingMember">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                            </AuthorizeView>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Statistics -->
+            <div class="col-lg-4">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="text-muted small">Total Members</label>
+                            <h3 class="mb-0">@(members?.Count ?? 0)</h3>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small">Active Members</label>
+                            <p class="mb-0">@(members?.Count(m => m.IsActive) ?? 0)</p>
+                        </div>
+                        <div>
+                            <label class="text-muted small">Inactive Members</label>
+                            <p class="mb-0">@(members?.Count(m => !m.IsActive) ?? 0)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show mt-3">
+            <i class="bi bi-check-circle"></i> @successMessage
+            <button type="button" class="btn-close" @onclick="() => successMessage = string.Empty"></button>
+        </div>
+    }
+</div>
+
+<!-- Add Member Modal -->
+@if (showAddMemberModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Add Team Member</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="HideAddMemberModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (isLoadingUsers)
+                    {
+                        <div class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Loading users...</span>
+                            </div>
+                            <p class="mt-2 small">Loading available users...</p>
+                        </div>
+                    }
+                    else if (availableUsers == null || !availableUsers.Any())
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> No users available to add. Please create users first.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Select User *</label>
+                            <select class="form-select" @bind="selectedUserId">
+                                <option value="">-- Select a user --</option>
+                                @foreach (var user in availableUsers)
+                                {
+                                    <option value="@user.Id">@user.FullName (@user.Email)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rotation Order *</label>
+                            <input type="number" class="form-control" @bind="rotationOrder" min="1" placeholder="1" />
+                            <small class="form-text text-muted">Order in the on-call rotation (1 = first)</small>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideAddMemberModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="AddMember" disabled="@isAddingMember">
+                        @if (isAddingMember)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <span>Adding...</span>
+                        }
+                        else
+                        {
+                            <span><i class="bi bi-check"></i> Add Member</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private bool isLoading = true;
+    private bool isDeleting = false;
+    private bool isAddingMember = false;
+    private bool isRemovingMember = false;
+    private bool showAddMemberModal = false;
+    private bool isLoadingUsers = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private TeamDto? team;
+    private List<TeamMemberDto>? members;
+    private List<UserDto>? availableUsers;
+
+    // Add member modal fields
+    private string selectedUserId = string.Empty;
+    private int rotationOrder = 1;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadTeamDetails();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadTeamDetails()
+    {
+        try
+        {
+            team = await TeamApi.GetByIdAsync(Id);
+            if (team == null)
+            {
+                errorMessage = "Team not found";
+                return;
+            }
+
+            members = await TeamApi.GetMembersAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load team details: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ShowAddMemberModal()
+    {
+        showAddMemberModal = true;
+        selectedUserId = string.Empty;
+        rotationOrder = (members?.Count ?? 0) + 1;
+        await LoadAvailableUsers();
+    }
+
+    private async Task LoadAvailableUsers()
+    {
+        isLoadingUsers = true;
+        try
+        {
+            // Get current user's organization ID from auth state
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var orgIdClaim = authState.User.FindFirst("OrganizationId");
+
+            if (orgIdClaim != null && Guid.TryParse(orgIdClaim.Value, out var orgId))
+            {
+                var allUsers = await UserApi.GetByOrganizationAsync(orgId);
+
+                // Filter out users who are already members
+                var memberUserIds = members?.Select(m => m.UserId).ToHashSet() ?? new HashSet<Guid>();
+                availableUsers = allUsers?.Where(u => !memberUserIds.Contains(u.Id) && u.IsActive).ToList();
+            }
+            else
+            {
+                errorMessage = "Unable to determine your organization";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load users: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingUsers = false;
+            StateHasChanged();
+        }
+    }
+
+    private void HideAddMemberModal()
+    {
+        showAddMemberModal = false;
+    }
+
+    private async Task AddMember()
+    {
+        if (string.IsNullOrWhiteSpace(selectedUserId) || !Guid.TryParse(selectedUserId, out var userId))
+        {
+            errorMessage = "Please enter a valid user ID";
+            return;
+        }
+
+        isAddingMember = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var request = new alertblurty.Models.Requests.Teams.AddTeamMemberRequest
+            {
+                UserId = userId,
+                RotationOrder = rotationOrder
+            };
+
+            var result = await TeamApi.AddMemberAsync(Id, request);
+
+            if (result != null)
+            {
+                successMessage = "Member added successfully!";
+                HideAddMemberModal();
+                await LoadTeamDetails();
+            }
+            else
+            {
+                errorMessage = "Failed to add member";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error adding member: {ex.Message}";
+        }
+        finally
+        {
+            isAddingMember = false;
+        }
+    }
+
+    private async Task RemoveMember(Guid userId)
+    {
+        isRemovingMember = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var success = await TeamApi.RemoveMemberAsync(Id, userId);
+
+            if (success)
+            {
+                successMessage = "Member removed successfully!";
+                await LoadTeamDetails();
+            }
+            else
+            {
+                errorMessage = "Failed to remove member";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error removing member: {ex.Message}";
+        }
+        finally
+        {
+            isRemovingMember = false;
+        }
+    }
+
+    private async Task DeleteTeam()
+    {
+        isDeleting = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var success = await TeamApi.DeleteAsync(Id);
+
+            if (success)
+            {
+                Navigation.NavigateTo("/teams");
+            }
+            else
+            {
+                errorMessage = "Failed to delete team";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting team: {ex.Message}";
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/teams");
+    }
+}

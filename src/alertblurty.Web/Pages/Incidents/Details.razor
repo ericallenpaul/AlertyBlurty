@@ -1,0 +1,356 @@
+@page "/incidents/{id:guid}"
+@attribute [Authorize]
+@inject IIncidentApiService IncidentApi
+@inject NavigationManager Navigation
+
+<PageTitle>Incident Details - AlertyBlurty</PageTitle>
+
+<div class="container-fluid mt-4">
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading incident details...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> @errorMessage
+        </div>
+        <button class="btn btn-secondary" @onclick="NavigateBack">
+            <i class="bi bi-arrow-left"></i> Back to Incidents
+        </button>
+    }
+    else if (incident != null)
+    {
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <button class="btn btn-secondary mb-3" @onclick="NavigateBack">
+                    <i class="bi bi-arrow-left"></i> Back to Incidents
+                </button>
+                <h2>
+                    <i class="bi bi-exclamation-triangle"></i> Incident Details
+                    <span class="badge @GetStatusBadgeClass(incident.Status) ms-2">@incident.Status.ToString()</span>
+                </h2>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column: Main Details -->
+            <div class="col-lg-8">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Trigger Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Trigger Name</label>
+                                <p class="mb-0"><strong>@incident.TriggerName</strong></p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Host Name</label>
+                                <p class="mb-0"><strong>@incident.HostName</strong></p>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(incident.TriggerDescription))
+                        {
+                            <div class="mb-3">
+                                <label class="text-muted small">Description</label>
+                                <p class="mb-0">@incident.TriggerDescription</p>
+                            </div>
+                        }
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="text-muted small">Severity</label>
+                                <p class="mb-0">
+                                    <span class="badge @GetSeverityBadgeClass(incident.Severity)">
+                                        @GetSeverityText(incident.Severity)
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Event Count</label>
+                                <p class="mb-0">
+                                    <span class="badge bg-secondary">@incident.EventCount</span>
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-muted small">Team</label>
+                                <p class="mb-0">@incident.TeamName</p>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="text-muted small">First Occurrence</label>
+                                <p class="mb-0">@incident.FirstOccurrenceUtc.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Last Occurrence</label>
+                                <p class="mb-0">@incident.LastOccurrenceUtc.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zabbix IDs -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Zabbix References</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Event ID</label>
+                                <p class="mb-0"><code>@incident.ZabbixEventId</code></p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Trigger ID</label>
+                                <p class="mb-0"><code>@incident.ZabbixTriggerId</code></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acknowledgment Info -->
+                @if (incident.Status == IncidentStatus.Acknowledged && incident.AcknowledgedByUserId != null)
+                {
+                    <div class="card shadow mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">Acknowledgment</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Acknowledged By</label>
+                                    <p class="mb-0">@incident.AcknowledgedByUserName</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Acknowledged At</label>
+                                    <p class="mb-0">@incident.AcknowledgedAtUtc?.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Right Column: Actions & Timeline -->
+            <div class="col-lg-4">
+                <!-- Actions Card -->
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (incident.Status == IncidentStatus.Open)
+                        {
+                            <button class="btn btn-warning w-100 mb-2" @onclick="AcknowledgeIncident" disabled="@isAcknowledging">
+                                @if (isAcknowledging)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                    <span>Acknowledging...</span>
+                                }
+                                else
+                                {
+                                    <span><i class="bi bi-check-circle"></i> Acknowledge Incident</span>
+                                }
+                            </button>
+                            <p class="text-muted small mb-0">Acknowledge that you're working on this incident</p>
+                        }
+                        else if (incident.Status == IncidentStatus.Acknowledged)
+                        {
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle"></i> This incident has been acknowledged and is being worked on.
+                            </div>
+                        }
+                        else if (incident.Status == IncidentStatus.Resolved)
+                        {
+                            <div class="alert alert-success mb-0">
+                                <i class="bi bi-check-circle"></i> This incident has been resolved.
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Timeline Card -->
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Timeline</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <i class="bi bi-exclamation-circle text-danger" style="font-size: 1.5rem;"></i>
+                                    </div>
+                                    <div>
+                                        <strong>Incident Triggered</strong>
+                                        <br />
+                                        <small class="text-muted">@incident.FirstOccurrenceUtc.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")</small>
+                                    </div>
+                                </div>
+                            </li>
+
+                            @if (incident.Status == IncidentStatus.Acknowledged && incident.AcknowledgedAtUtc != null)
+                            {
+                                <li class="mb-3">
+                                    <div class="d-flex">
+                                        <div class="me-3">
+                                            <i class="bi bi-check-circle text-warning" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Acknowledged</strong>
+                                            <br />
+                                            <small class="text-muted">
+                                                by @incident.AcknowledgedByUserName
+                                                <br />
+                                                @incident.AcknowledgedAtUtc.Value.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")
+                                            </small>
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+
+                            @if (incident.EventCount > 1)
+                            {
+                                <li class="mb-3">
+                                    <div class="d-flex">
+                                        <div class="me-3">
+                                            <i class="bi bi-arrow-repeat text-info" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Last Occurrence</strong>
+                                            <br />
+                                            <small class="text-muted">
+                                                Event #@incident.EventCount
+                                                <br />
+                                                @incident.LastOccurrenceUtc.ToLocalTime().ToString("MMM dd, yyyy HH:mm:ss")
+                                            </small>
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private bool isLoading = true;
+    private bool isAcknowledging = false;
+    private string errorMessage = string.Empty;
+    private IncidentDto? incident;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadIncident();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadIncident()
+    {
+        try
+        {
+            incident = await IncidentApi.GetByIdAsync(Id);
+            if (incident == null)
+            {
+                errorMessage = "Incident not found";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load incident: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task AcknowledgeIncident()
+    {
+        isAcknowledging = true;
+        try
+        {
+            var result = await IncidentApi.AcknowledgeAsync(Id);
+            if (result != null)
+            {
+                incident = result;
+            }
+            else
+            {
+                errorMessage = "Failed to acknowledge incident";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error acknowledging incident: {ex.Message}";
+        }
+        finally
+        {
+            isAcknowledging = false;
+        }
+    }
+
+    private string GetSeverityBadgeClass(int severity)
+    {
+        return severity switch
+        {
+            5 => "bg-danger",
+            4 => "bg-danger",
+            3 => "bg-warning text-dark",
+            2 => "badge-alerty",
+            1 => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetSeverityText(int severity)
+    {
+        return severity switch
+        {
+            5 => "Disaster",
+            4 => "High",
+            3 => "Average",
+            2 => "Warning",
+            1 => "Information",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetStatusBadgeClass(IncidentStatus status)
+    {
+        return status switch
+        {
+            IncidentStatus.Open => "bg-danger text-white",
+            IncidentStatus.Acknowledged => "bg-warning text-dark",
+            IncidentStatus.Resolved => "bg-success text-white",
+            _ => "bg-secondary text-white"
+        };
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo("/incidents");
+    }
+}
