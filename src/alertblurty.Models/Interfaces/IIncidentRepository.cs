@@ -6,7 +6,7 @@ public interface IIncidentRepository
 {
     Task<IncidentDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IncidentDto?> GetByZabbixEventIdAsync(string eventId, CancellationToken cancellationToken = default);
-    Task<IncidentDto?> GetOpenIncidentByHostAndTriggerAsync(string hostName, string triggerId, CancellationToken cancellationToken = default);
+    Task<IncidentDto?> GetOpenIncidentByHostAndTriggerAsync(Guid teamId, string hostName, string triggerId, CancellationToken cancellationToken = default);
     Task<List<IncidentDto>> GetByTeamIdAsync(Guid teamId, IncidentStatus? status = null, CancellationToken cancellationToken = default);
     Task<List<IncidentDto>> GetOpenIncidentsAsync(CancellationToken cancellationToken = default);
     Task<IncidentDto> CreateAsync(IncidentDto incident, CancellationToken cancellationToken = default);

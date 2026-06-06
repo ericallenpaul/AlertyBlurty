@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "release/*"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore alertblurty.sln
+
+      - name: Build
+        run: dotnet build alertblurty.sln --configuration Release --no-restore
+
+      - name: Lint (dotnet format)
+        run: dotnet format alertblurty.sln --verify-no-changes --no-restore
+
+      - name: Test
+        run: dotnet test alertblurty.sln --configuration Release --no-build --collect:"XPlat Code Coverage"
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore alertblurty.sln
+
+      - name: Dependency vulnerability scan
+        shell: pwsh
+        run: |
+          $output = dotnet list alertblurty.sln package --vulnerable --include-transitive
+          $output
+          if ($output -match 'has the following vulnerable packages') {
+            throw 'Vulnerable package(s) detected.'
+          }
