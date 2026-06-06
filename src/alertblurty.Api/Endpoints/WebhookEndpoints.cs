@@ -57,7 +57,6 @@ public static class WebhookEndpoints
             }
         })
         .WithName("ZabbixWebhook")
-        .WithOpenApi()
         .AllowAnonymous(); // Zabbix webhooks don't use JWT authentication
     }
 }

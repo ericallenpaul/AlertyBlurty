@@ -5,7 +5,7 @@ Thanks for contributing.
 ## Development setup
 
 1. Install prerequisites:
-   - .NET 8 SDK
+   - .NET 10 SDK
    - PostgreSQL 15+
 2. Clone the repo and restore dependencies:
    - `dotnet restore alertblurty.sln`

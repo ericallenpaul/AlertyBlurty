@@ -21,7 +21,7 @@ alertblurty is a self-hosted on-call alert management system that receives webho
 
 ### Prerequisites
 
-- .NET 8 SDK
+- .NET 10 SDK
 - PostgreSQL 15+
 - Twilio account (for SMS notifications)
 - Zabbix 7.4 instance
@@ -183,7 +183,7 @@ tests/
 
 ### Technology Stack
 
-- **Backend**: C# / .NET 8
+- **Backend**: C# / .NET 10
 - **Database**: PostgreSQL 15+
 - **UI**: Blazor Server
 - **Logging**: NLog (7-day retention)

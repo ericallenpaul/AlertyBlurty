@@ -22,7 +22,6 @@ public static class AuthEndpoints
                 : Results.BadRequest(result);
         })
         .WithName("Register")
-        .WithOpenApi()
         .Produces(200)
         .Produces(400);
 
@@ -37,7 +36,6 @@ public static class AuthEndpoints
                 : Results.Unauthorized();
         })
         .WithName("Login")
-        .WithOpenApi()
         .Produces(200)
         .Produces(401);
     }

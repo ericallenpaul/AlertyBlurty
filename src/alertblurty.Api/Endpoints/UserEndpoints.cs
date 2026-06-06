@@ -29,8 +29,7 @@ public static class UserEndpoints
                 ? Results.Ok(userDto)
                 : Results.NotFound();
         })
-        .WithName("GetCurrentUser")
-        .WithOpenApi();
+        .WithName("GetCurrentUser");
 
         group.MapGet("/{id:guid}", async (
             [FromRoute] Guid id,
@@ -42,8 +41,7 @@ public static class UserEndpoints
                 ? Results.Ok(userDto)
                 : Results.NotFound();
         })
-        .WithName("GetUserById")
-        .WithOpenApi();
+        .WithName("GetUserById");
 
         group.MapGet("/organization/{organizationId:guid}", async (
             [FromRoute] Guid organizationId,
@@ -53,8 +51,7 @@ public static class UserEndpoints
             var users = await userRepository.GetByOrganizationIdAsync(organizationId, cancellationToken);
             return Results.Ok(users);
         })
-        .WithName("GetUsersByOrganization")
-        .WithOpenApi();
+        .WithName("GetUsersByOrganization");
 
         group.MapPost("/", async (
             [FromBody] CreateUserRequest request,
@@ -100,7 +97,6 @@ public static class UserEndpoints
             return Results.Created($"/api/users/{createdUser.Id}", createdUser);
         })
         .WithName("CreateUser")
-        .WithOpenApi()
         .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
 
         group.MapPut("/{id:guid}", async (
@@ -125,7 +121,6 @@ public static class UserEndpoints
             return Results.Ok(updatedUser);
         })
         .WithName("UpdateUser")
-        .WithOpenApi()
         .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
 
         group.MapDelete("/{id:guid}", async (
@@ -137,7 +132,6 @@ public static class UserEndpoints
             return Results.NoContent();
         })
         .WithName("DeleteUser")
-        .WithOpenApi()
         .RequireAuthorization(policy => policy.RequireRole("SuperAdmin"));
     }
 }

@@ -23,8 +23,7 @@ public static class TeamEndpoints
                 ? Results.Ok(team)
                 : Results.NotFound();
         })
-        .WithName("GetTeamById")
-        .WithOpenApi();
+        .WithName("GetTeamById");
 
         group.MapGet("/organization/{organizationId:guid}", async (
             [FromRoute] Guid organizationId,
@@ -34,8 +33,7 @@ public static class TeamEndpoints
             var teams = await teamRepository.GetByOrganizationIdAsync(organizationId, cancellationToken);
             return Results.Ok(teams);
         })
-        .WithName("GetTeamsByOrganization")
-        .WithOpenApi();
+        .WithName("GetTeamsByOrganization");
 
         group.MapPost("/", async (
             [FromBody] CreateTeamRequest request,
@@ -68,7 +66,6 @@ public static class TeamEndpoints
             return Results.Created($"/api/teams/{createdTeam.Id}", createdTeam);
         })
         .WithName("CreateTeam")
-        .WithOpenApi()
         .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
 
         group.MapPut("/{id:guid}", async (
@@ -92,7 +89,6 @@ public static class TeamEndpoints
             return Results.Ok(updatedTeam);
         })
         .WithName("UpdateTeam")
-        .WithOpenApi()
         .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
 
         group.MapDelete("/{id:guid}", async (
@@ -104,7 +100,6 @@ public static class TeamEndpoints
             return Results.NoContent();
         })
         .WithName("DeleteTeam")
-        .WithOpenApi()
         .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
 
         // Team members endpoints
@@ -116,8 +111,7 @@ public static class TeamEndpoints
             var members = await teamRepository.GetTeamMembersAsync(teamId, cancellationToken);
             return Results.Ok(members);
         })
-        .WithName("GetTeamMembers")
-        .WithOpenApi();
+        .WithName("GetTeamMembers");
 
         group.MapPost("/{teamId:guid}/members", async (
             [FromRoute] Guid teamId,
@@ -137,7 +131,6 @@ public static class TeamEndpoints
             return Results.Created($"/api/teams/{teamId}/members", createdMember);
         })
         .WithName("AddTeamMember")
-        .WithOpenApi()
         .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
 
         group.MapDelete("/{teamId:guid}/members/{userId:guid}", async (
@@ -150,7 +143,6 @@ public static class TeamEndpoints
             return Results.NoContent();
         })
         .WithName("RemoveTeamMember")
-        .WithOpenApi()
         .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
     }
 }
