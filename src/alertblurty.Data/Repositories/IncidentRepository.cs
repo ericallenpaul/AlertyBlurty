@@ -34,12 +34,13 @@ public class IncidentRepository : IIncidentRepository
         return incident == null ? null : MapToDto(incident);
     }
 
-    public async Task<IncidentDto?> GetOpenIncidentByHostAndTriggerAsync(string hostName, string triggerId, CancellationToken cancellationToken = default)
+    public async Task<IncidentDto?> GetOpenIncidentByHostAndTriggerAsync(Guid teamId, string hostName, string triggerId, CancellationToken cancellationToken = default)
     {
         var incident = await _context.Incidents
             .Include(i => i.Team)
             .Include(i => i.AcknowledgedByUser)
-            .FirstOrDefaultAsync(i => i.HostName == hostName
+            .FirstOrDefaultAsync(i => i.TeamId == teamId
+                && i.HostName == hostName
                 && i.ZabbixTriggerId == triggerId
                 && i.Status == Entities.IncidentStatus.Open, cancellationToken);
 

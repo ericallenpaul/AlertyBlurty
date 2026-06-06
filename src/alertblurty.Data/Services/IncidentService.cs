@@ -38,7 +38,7 @@ public class IncidentService : IIncidentService
         {
             // Try to resolve existing incident
             var existingIncident = await _incidentRepository.GetOpenIncidentByHostAndTriggerAsync(
-                request.HostName, request.TriggerId, cancellationToken);
+                teamId, request.HostName, request.TriggerId, cancellationToken);
 
             if (existingIncident != null)
             {
@@ -54,12 +54,26 @@ public class IncidentService : IIncidentService
             _logger.LogInformation("Received OK status for {HostName}/{TriggerId} but no open incident found",
                 request.HostName, request.TriggerId);
 
-            throw new InvalidOperationException("No open incident found to resolve");
+            return new IncidentDto
+            {
+                Id = Guid.Empty,
+                TeamId = teamId,
+                ZabbixEventId = request.EventId,
+                ZabbixTriggerId = request.TriggerId,
+                HostName = request.HostName,
+                TriggerName = request.TriggerName,
+                TriggerDescription = request.TriggerDescription,
+                Severity = request.Severity,
+                FirstOccurrenceUtc = request.EventTime,
+                LastOccurrenceUtc = request.EventTime,
+                EventCount = 0,
+                Status = IncidentStatus.Resolved
+            };
         }
 
         // Check if we already have an open incident for this host + trigger combo
         var incident = await _incidentRepository.GetOpenIncidentByHostAndTriggerAsync(
-            request.HostName, request.TriggerId, cancellationToken);
+            teamId, request.HostName, request.TriggerId, cancellationToken);
 
         if (incident != null)
         {

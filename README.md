@@ -200,6 +200,9 @@ tests/
 - [Database Schema](docs/database-schema.md) - Schema documentation
 - [Deployment Guide](docs/deployment.md) - Production deployment instructions
 - [Monitoring & Operations](docs/monitoring.md) - Observability and operations guide
+- [Release Process](docs/release-process.md) - Tagged release and rollback workflow
+- [Release Notes v0.1.0](docs/release-notes-v0.1.0.md) - Initial OSS preview notes
+- [Security Policy](SECURITY.md) - Vulnerability reporting and disclosure process
 
 ### API Endpoints
 
@@ -284,10 +287,11 @@ dotnet publish -c Release -o out
 ## Contributing
 
 This is a single-tenant, self-hosted solution. Contributions are welcome for bug fixes and feature enhancements.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, and pull request requirements.
 
 ## License
 
-[Your License Here]
+This project is licensed under the [MIT License](LICENSE).
 
 ## Support
 
