@@ -24,8 +24,7 @@ public static class IncidentEndpoints
                 ? Results.Ok(incident)
                 : Results.NotFound();
         })
-        .WithName("GetIncidentById")
-        .WithOpenApi();
+        .WithName("GetIncidentById");
 
         group.MapGet("/team/{teamId:guid}", async (
             [FromRoute] Guid teamId,
@@ -36,8 +35,7 @@ public static class IncidentEndpoints
             var incidents = await incidentRepository.GetByTeamIdAsync(teamId, status, cancellationToken);
             return Results.Ok(incidents);
         })
-        .WithName("GetIncidentsByTeam")
-        .WithOpenApi();
+        .WithName("GetIncidentsByTeam");
 
         group.MapGet("/open", async (
             [FromServices] IIncidentRepository incidentRepository,
@@ -46,8 +44,7 @@ public static class IncidentEndpoints
             var incidents = await incidentRepository.GetOpenIncidentsAsync(cancellationToken);
             return Results.Ok(incidents);
         })
-        .WithName("GetOpenIncidents")
-        .WithOpenApi();
+        .WithName("GetOpenIncidents");
 
         group.MapPost("/{id:guid}/acknowledge", async (
             [FromRoute] Guid id,
@@ -75,7 +72,6 @@ public static class IncidentEndpoints
                 return Results.BadRequest(new { error = ex.Message });
             }
         })
-        .WithName("AcknowledgeIncident")
-        .WithOpenApi();
+        .WithName("AcknowledgeIncident");
     }
 }
