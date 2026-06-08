@@ -35,11 +35,10 @@ describe("DashboardPage", () => {
     vi.clearAllMocks();
   });
 
-  it("summarizes incidents and lists active incidents", async () => {
+  it("summarizes the open incidents returned by the open endpoint", async () => {
     incidentsApi.getOpenIncidents.mockResolvedValue([
       incident("1", IncidentStatus.Open),
-      incident("2", IncidentStatus.Acknowledged),
-      incident("3", IncidentStatus.Resolved),
+      incident("2", IncidentStatus.Open),
     ]);
 
     render(
@@ -49,9 +48,9 @@ describe("DashboardPage", () => {
     );
 
     expect((await screen.findAllByText("Incident 1"))[0]).toBeVisible();
-    expect(screen.getByTestId("active-incidents-count")).toHaveTextContent("1");
-    expect(screen.getByTestId("acknowledged-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("active-incidents-count")).toHaveTextContent("2");
+    expect(screen.getByTestId("acknowledged-count")).toHaveTextContent("0");
     expect(screen.getByTestId("my-teams-count")).toHaveTextContent("0");
-    expect(screen.getByTestId("resolved-today-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("resolved-today-count")).toHaveTextContent("0");
   });
 });

@@ -33,12 +33,8 @@ export function DashboardPage() {
       active: incidents.filter(
         (incident) => incident.status === IncidentStatus.Open,
       ).length,
-      acknowledged: incidents.filter(
-        (incident) => incident.status === IncidentStatus.Acknowledged,
-      ).length,
-      resolved: incidents.filter(
-        (incident) => incident.status === IncidentStatus.Resolved,
-      ).length,
+      acknowledged: 0,
+      resolved: 0,
     }),
     [incidents],
   );

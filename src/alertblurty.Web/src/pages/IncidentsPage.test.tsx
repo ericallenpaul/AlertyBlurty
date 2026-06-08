@@ -40,7 +40,7 @@ describe("IncidentsPage", () => {
   it("acknowledges an open incident and refreshes the list", async () => {
     incidentsApi.getOpenIncidents
       .mockResolvedValueOnce([incident("1", IncidentStatus.Open)])
-      .mockResolvedValueOnce([incident("1", IncidentStatus.Acknowledged)]);
+      .mockResolvedValueOnce([]);
     incidentsApi.acknowledgeIncident.mockResolvedValue(
       incident("1", IncidentStatus.Acknowledged),
     );
@@ -58,5 +58,28 @@ describe("IncidentsPage", () => {
     );
     expect(incidentsApi.getOpenIncidents).toHaveBeenCalledTimes(2);
     expect(await screen.findByText("No incidents found")).toBeVisible();
+  });
+
+  it("does not show status filters that the open endpoint cannot support", async () => {
+    incidentsApi.getOpenIncidents.mockResolvedValue([
+      incident("1", IncidentStatus.Open),
+    ]);
+
+    render(
+      <MemoryRouter>
+        <IncidentsPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Open Incidents")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: /acknowledged/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /resolved/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^all/i }),
+    ).not.toBeInTheDocument();
   });
 });

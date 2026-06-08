@@ -53,6 +53,13 @@ describe("TeamsPage", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: /new team/i }),
     );
+    expect(screen.getByRole("dialog", { name: "Create Team" })).toHaveAttribute(
+      "aria-modal",
+      "true",
+    );
+    expect(
+      screen.getByRole("button", { name: "Close create team dialog" }),
+    ).toBeVisible();
     await userEvent.type(screen.getByLabelText("Team Name *"), "Database");
     await userEvent.type(screen.getByLabelText("Description"), "DB alerts");
     await userEvent.click(screen.getByRole("button", { name: "Create Team" }));
