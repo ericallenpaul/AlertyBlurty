@@ -3,20 +3,20 @@ import { Route, Routes } from "react-router-dom";
 
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { MainLayout } from "./layout/MainLayout";
+import { CreateUserPage } from "./pages/CreateUserPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { HomeRedirect } from "./pages/HomeRedirect";
+import { IncidentDetailsPage } from "./pages/IncidentDetailsPage";
+import { IncidentsPage } from "./pages/IncidentsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { LogoutPage } from "./pages/LogoutPage";
+import { SetupPage } from "./pages/SetupPage";
+import { TeamDetailsPage } from "./pages/TeamDetailsPage";
+import { TeamsPage } from "./pages/TeamsPage";
+import { UserDetailsPage } from "./pages/UserDetailsPage";
+import { UserInfoPage } from "./pages/UserInfoPage";
+import { UsersPage } from "./pages/UsersPage";
 import { UserRole } from "./types/api";
-
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <section>
-      <h1 className="h2">{title}</h1>
-      <p className="text-muted">This page will be implemented in Task 4.</p>
-    </section>
-  );
-}
 
 function protectedElement(element: ReactElement, requiredRoles?: UserRole[]) {
   return (
@@ -30,6 +30,7 @@ export function App() {
       <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/logout" element={<LogoutPage />} />
+      <Route path="/setup" element={<SetupPage />} />
       <Route element={<MainLayout />}>
         <Route
           path="/dashboard"
@@ -37,26 +38,35 @@ export function App() {
         />
         <Route
           path="/incidents"
-          element={protectedElement(<PlaceholderPage title="Incidents" />)}
+          element={protectedElement(<IncidentsPage />)}
         />
         <Route
-          path="/teams"
-          element={protectedElement(<PlaceholderPage title="Teams" />)}
+          path="/incidents/:id"
+          element={protectedElement(<IncidentDetailsPage />)}
         />
+        <Route path="/teams" element={protectedElement(<TeamsPage />)} />
         <Route
-          path="/user-info"
-          element={protectedElement(<PlaceholderPage title="User Info" />)}
+          path="/teams/:id"
+          element={protectedElement(<TeamDetailsPage />)}
         />
+        <Route path="/user-info" element={protectedElement(<UserInfoPage />)} />
         <Route
           path="/users"
-          element={protectedElement(<PlaceholderPage title="Users" />, [
+          element={protectedElement(<UsersPage />, [
             UserRole.Admin,
             UserRole.SuperAdmin,
           ])}
         />
         <Route
-          path="/setup"
-          element={protectedElement(<PlaceholderPage title="Setup" />, [
+          path="/users/create"
+          element={protectedElement(<CreateUserPage />, [
+            UserRole.Admin,
+            UserRole.SuperAdmin,
+          ])}
+        />
+        <Route
+          path="/users/:id"
+          element={protectedElement(<UserDetailsPage />, [
             UserRole.Admin,
             UserRole.SuperAdmin,
           ])}

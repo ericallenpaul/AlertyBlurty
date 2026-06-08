@@ -85,11 +85,34 @@ describe("LoginPage", () => {
       "user@example.com",
     );
     await userEvent.type(screen.getByLabelText("Password"), "password");
-    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sign In" }));
 
     await waitFor(() =>
       expect(screen.getByText("Incidents page")).toBeVisible(),
     );
     expect(screen.queryByText("Dashboard page")).not.toBeInTheDocument();
+  });
+
+  it("shows the expected placeholders and failure message", async () => {
+    authApi.login.mockResolvedValue(null);
+    renderProtectedLoginFlow();
+
+    expect(
+      screen.getByPlaceholderText("your.email@example.com"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Enter your password"),
+    ).toBeInTheDocument();
+
+    await userEvent.type(
+      screen.getByLabelText("Email address"),
+      "user@example.com",
+    );
+    await userEvent.type(screen.getByLabelText("Password"), "wrong-password");
+    await userEvent.click(screen.getByRole("button", { name: "Sign In" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Invalid email or password.",
+    );
   });
 });
