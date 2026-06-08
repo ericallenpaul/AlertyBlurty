@@ -1,21 +1,27 @@
 import { type FormEvent, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthProvider";
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { isAuthenticated, login } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  if (isAuthenticated && !hasSubmitted) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
+    setHasSubmitted(true);
 
     try {
       const response = await login({ email, password });
@@ -54,7 +60,7 @@ export function LoginPage() {
                 id="email"
                 name="email"
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="name@example.com"
+                placeholder="your.email@example.com"
                 required
                 type="email"
                 value={email}
@@ -81,7 +87,7 @@ export function LoginPage() {
               disabled={isSubmitting}
               type="submit"
             >
-              {isSubmitting ? "Signing in..." : "Sign in"}
+              {isSubmitting ? "Signing in..." : "Sign In"}
             </button>
           </form>
         </div>
