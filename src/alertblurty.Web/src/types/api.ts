@@ -1,4 +1,8 @@
-export type UserRole = "User" | "Admin" | "SuperAdmin";
+export enum UserRole {
+  User = 0,
+  Admin = 1,
+  SuperAdmin = 2,
+}
 
 export enum IncidentStatus {
   Open = 0,

@@ -1,3 +1,5 @@
+import axios from "axios";
+
 import { http } from "./http";
 import type { OrganizationDto } from "../types/api";
 
@@ -7,6 +9,14 @@ export async function getOrganizations(): Promise<OrganizationDto[]> {
 }
 
 export async function hasOrganizations(): Promise<boolean> {
-  const organizations = await getOrganizations();
-  return organizations.length > 0;
+  try {
+    const organizations = await getOrganizations();
+    return organizations.length > 0;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return false;
+    }
+
+    throw error;
+  }
 }
