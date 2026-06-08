@@ -14,7 +14,7 @@ alertblurty is a self-hosted on-call alert management system that receives webho
 - **Shift Swap Management**: Request and approve shift swaps with optional admin approval
 - **Role-Based Access Control**: Superadmin, admin, and user roles
 - **Immutable Audit Logging**: Complete audit trail with configurable retention
-- **Web-Based UI**: Blazor web interface for incident and schedule management
+- **Web-Based UI**: React web interface for incident and schedule management
 - **First-Run Setup Wizard**: Easy initial configuration
 
 ## Quick Start
@@ -22,6 +22,7 @@ alertblurty is a self-hosted on-call alert management system that receives webho
 ### Prerequisites
 
 - .NET 10 SDK
+- Node.js 24+
 - PostgreSQL 15+
 - Twilio account (for SMS notifications)
 - Zabbix 7.4 instance
@@ -90,9 +91,13 @@ alertblurty is a self-hosted on-call alert management system that receives webho
    ```
    Note: the app role password is loaded from User Secrets or `DB_PASSWORD`, not stored in appsettings.json.
 
-5. **Build the solution**
+5. **Build the backend and frontend**
    ```bash
    dotnet build
+   cd src/alertblurty.Web
+   npm install
+   npm run build
+   cd ../..
    ```
 
 6. **Run database migrations**
@@ -102,29 +107,32 @@ alertblurty is a self-hosted on-call alert management system that receives webho
    ```
    This creates 11 tables with proper indexes and foreign key relationships.
 
-7. **Run the application**
+7. **Run the API**
    ```bash
-   dotnet run --project src/alertblurty.Api
+   dotnet run --project src/alertblurty.Api/alertblurty.Api.csproj
    ```
    The API will be available at:
    - HTTP: `http://localhost:5041`
    - Swagger UI: `http://localhost:5041/swagger`
 
-8. **Register your organization**
+8. **Run the React frontend**
 
-   Use the API to create your first organization and SuperAdmin user:
+   In a second terminal:
    ```bash
-   curl -X POST http://localhost:5041/api/auth/register \
-     -H "Content-Type: application/json" \
-     -d '{
-       "email": "admin@example.com",
-       "password": "SecurePassword123!",
-       "fullName": "Admin User",
-       "phoneNumber": "+15551234567",
-       "timezone": "America/New_York",
-       "organizationName": "My Organization"
-     }'
+   cd src/alertblurty.Web
+   npm install
+   npm run dev
    ```
+   The web UI will be available at `http://127.0.0.1:5260` and will proxy API calls to `http://127.0.0.1:5041`.
+
+   For a different API URL, set `VITE_API_BASE_URL` before starting Vite:
+   ```bash
+   VITE_API_BASE_URL=http://localhost:5041 npm run dev
+   ```
+
+9. **Register your organization**
+
+   Open the web UI and use the first-run setup wizard, or use the API directly as documented in `docs/api-guide.md`.
 
    See `docs/api-guide.md` for complete API documentation and examples.
 
@@ -166,6 +174,7 @@ kubectl apply -f k8s/service.yaml
 - `JWT_ISSUER`: JWT token issuer (default: "AlertyBlurty")
 - `JWT_AUDIENCE`: JWT token audience (default: "AlertyBlurty")
 - `JWT_EXPIRY_HOURS`: JWT token expiration in hours (default: 24)
+- `VITE_API_BASE_URL`: React frontend API base URL at build/dev time (default: same origin with Vite dev proxy)
 - `WEBHOOK_IP_ALLOWLIST`: Comma-separated list of allowed IPs for webhooks
 - `AUDIT_LOG_RETENTION_DAYS`: Days to retain audit logs (default: 90)
 
@@ -185,9 +194,10 @@ alertblurty follows a layered architecture:
 
 ```
 src/
-├── alertblurty.Api/      # Web API and Blazor UI
+├── alertblurty.Api/      # ASP.NET Core Web API
 ├── alertblurty.Data/     # Data access layer (EF Core)
-└── alertblurty.Models/   # DTOs and interfaces
+├── alertblurty.Models/   # DTOs and interfaces
+└── alertblurty.Web/      # React/Vite frontend
 
 tests/
 └── alertblurty.Tests/    # Unit and integration tests
@@ -197,7 +207,7 @@ tests/
 
 - **Backend**: C# / .NET 10
 - **Database**: PostgreSQL 15+
-- **UI**: Blazor Server
+- **UI**: React, TypeScript, Vite
 - **Logging**: NLog (7-day retention)
 - **Retry Logic**: Polly
 - **SMS**: Twilio SDK
@@ -209,6 +219,7 @@ tests/
 
 - **[API Usage Guide](docs/api-guide.md)** - Complete API reference with curl examples
 - **[Environment Variables](docs/environment-variables.md)** - Configuration reference for all environments
+- **[Frontend Deployment](docs/frontend-deployment.md)** - Static React artifact hosting model
 - [Database Schema](docs/database-schema.md) - Schema documentation
 - [Deployment Guide](docs/deployment.md) - Production deployment instructions
 - [Monitoring & Operations](docs/monitoring.md) - Observability and operations guide
