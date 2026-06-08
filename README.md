@@ -219,6 +219,7 @@ tests/
 
 - **[API Usage Guide](docs/api-guide.md)** - Complete API reference with curl examples
 - **[Environment Variables](docs/environment-variables.md)** - Configuration reference for all environments
+- **[Frontend Deployment](docs/frontend-deployment.md)** - Static React artifact hosting model
 - [Database Schema](docs/database-schema.md) - Schema documentation
 - [Deployment Guide](docs/deployment.md) - Production deployment instructions
 - [Monitoring & Operations](docs/monitoring.md) - Observability and operations guide
