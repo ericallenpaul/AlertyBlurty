@@ -36,9 +36,21 @@ alertblurty is a self-hosted on-call alert management system that receives webho
 
 2. **Set up PostgreSQL database**
    ```sql
-   CREATE DATABASE alertyblurty;
-   CREATE USER "alertyblurty-user" WITH PASSWORD 'your_secure_password';
-   GRANT ALL PRIVILEGES ON DATABASE alertyblurty TO "alertyblurty-user";
+   CREATE ROLE alertyblurty_migration LOGIN PASSWORD 'migration_password';
+   CREATE ROLE alertyblurty_app LOGIN PASSWORD 'app_password';
+   CREATE DATABASE alertyblurty OWNER alertyblurty_migration;
+   GRANT CONNECT ON DATABASE alertyblurty TO alertyblurty_app;
+
+   \connect alertyblurty
+   ALTER SCHEMA public OWNER TO alertyblurty_migration;
+   GRANT CREATE, USAGE ON SCHEMA public TO alertyblurty_migration;
+   GRANT USAGE ON SCHEMA public TO alertyblurty_app;
+   ALTER DEFAULT PRIVILEGES FOR ROLE alertyblurty_migration IN SCHEMA public
+     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO alertyblurty_app;
+   ALTER DEFAULT PRIVILEGES FOR ROLE alertyblurty_migration IN SCHEMA public
+     GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO alertyblurty_app;
+   ALTER DEFAULT PRIVILEGES FOR ROLE alertyblurty_migration IN SCHEMA public
+     GRANT EXECUTE ON FUNCTIONS TO alertyblurty_app;
    ```
 
 3. **Configure User Secrets (Local Development)**
@@ -47,7 +59,7 @@ alertblurty is a self-hosted on-call alert management system that receives webho
    ```bash
    cd src/alertblurty.Api
    dotnet user-secrets init
-   dotnet user-secrets set "DB_PASSWORD" "your_secure_password"
+   dotnet user-secrets set "DB_PASSWORD" "app_password"
    dotnet user-secrets set "JWT_SECRET" "your_jwt_secret_minimum_32_characters"
    dotnet user-secrets set "TWILIO_ACCOUNT_SID" "your_twilio_account_sid"
    dotnet user-secrets set "TWILIO_AUTH_TOKEN" "your_twilio_auth_token"
@@ -64,7 +76,7 @@ alertblurty is a self-hosted on-call alert management system that receives webho
    ```json
    {
      "ConnectionStrings": {
-       "DefaultConnection": "Host=localhost;Port=5432;Database=alertyblurty;Username=alertyblurty-user"
+       "DefaultConnection": "Host=localhost;Port=5432;Database=alertyblurty;Username=alertyblurty_app"
      },
      "JwtSettings": {
        "Issuer": "AlertyBlurty",
@@ -76,7 +88,7 @@ alertblurty is a self-hosted on-call alert management system that receives webho
      }
    }
    ```
-   Note: Password is loaded from User Secrets, not stored in appsettings.json
+   Note: the app role password is loaded from User Secrets or `DB_PASSWORD`, not stored in appsettings.json.
 
 5. **Build the solution**
    ```bash
@@ -86,7 +98,7 @@ alertblurty is a self-hosted on-call alert management system that receives webho
 6. **Run database migrations**
    ```bash
    cd src/alertblurty.Api
-   dotnet ef database update --project ../alertblurty.Data
+   dotnet ef database update --project ../alertblurty.Data --connection "Host=localhost;Port=5432;Database=alertyblurty;Username=alertyblurty_migration;Password=migration_password"
    ```
    This creates 11 tables with proper indexes and foreign key relationships.
 

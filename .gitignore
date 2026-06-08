@@ -400,6 +400,8 @@ FodyWeavers.xsd
 
 # Custom entries for alertblurty
 logs/
+.env
+.env.*
 appsettings.Development.json
 appsettings.Local.json
 *.user
