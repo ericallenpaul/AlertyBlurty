@@ -1,10 +1,11 @@
 import { type FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthProvider";
 
 export function LoginPage() {
   const { login } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +25,7 @@ export function LoginPage() {
         return;
       }
 
-      navigate("/dashboard", { replace: true });
+      navigate(getPostLoginPath(location.state), { replace: true });
     } catch {
       setError("Invalid email or password.");
     } finally {
@@ -87,4 +88,30 @@ export function LoginPage() {
       </div>
     </main>
   );
+}
+
+function getPostLoginPath(state: unknown) {
+  if (
+    state &&
+    typeof state === "object" &&
+    "from" in state &&
+    state.from &&
+    typeof state.from === "object" &&
+    "pathname" in state.from &&
+    typeof state.from.pathname === "string" &&
+    state.from.pathname !== "/login"
+  ) {
+    const search =
+      "search" in state.from && typeof state.from.search === "string"
+        ? state.from.search
+        : "";
+    const hash =
+      "hash" in state.from && typeof state.from.hash === "string"
+        ? state.from.hash
+        : "";
+
+    return `${state.from.pathname}${search}${hash}`;
+  }
+
+  return "/dashboard";
 }

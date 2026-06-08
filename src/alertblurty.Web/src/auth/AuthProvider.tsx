@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -80,6 +81,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     clearToken();
     setAuthState({ token: null, claims: null });
   }, []);
+
+  useEffect(() => {
+    if (!authState.claims || !authState.token) {
+      return;
+    }
+
+    const expiresInMilliseconds =
+      authState.claims.expiresAt * 1000 - Date.now();
+
+    const timeoutId = window.setTimeout(
+      () => {
+        refreshFromToken(authState.token);
+      },
+      Math.max(expiresInMilliseconds, 0),
+    );
+
+    return () => window.clearTimeout(timeoutId);
+  }, [authState.claims, authState.token, refreshFromToken]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
