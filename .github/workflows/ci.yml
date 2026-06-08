@@ -24,6 +24,13 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/alertblurty.Web/package-lock.json
+
       - name: Restore
         run: dotnet restore alertblurty.sln
 
@@ -36,6 +43,22 @@ jobs:
       - name: Test
         run: dotnet test alertblurty.sln --configuration Release --no-build --collect:"XPlat Code Coverage"
 
+      - name: Install frontend dependencies
+        working-directory: src/alertblurty.Web
+        run: npm ci
+
+      - name: Lint frontend
+        working-directory: src/alertblurty.Web
+        run: npm run lint
+
+      - name: Test frontend
+        working-directory: src/alertblurty.Web
+        run: npm test
+
+      - name: Build frontend
+        working-directory: src/alertblurty.Web
+        run: npm run build
+
   security:
     runs-on: ubuntu-latest
     steps:
@@ -47,8 +70,19 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/alertblurty.Web/package-lock.json
+
       - name: Restore
         run: dotnet restore alertblurty.sln
+
+      - name: Install frontend dependencies
+        working-directory: src/alertblurty.Web
+        run: npm ci
 
       - name: Dependency vulnerability scan
         shell: pwsh
@@ -58,3 +92,7 @@ jobs:
           if ($output -match 'has the following vulnerable packages') {
             throw 'Vulnerable package(s) detected.'
           }
+
+      - name: Frontend dependency audit
+        working-directory: src/alertblurty.Web
+        run: npm audit --audit-level=high
