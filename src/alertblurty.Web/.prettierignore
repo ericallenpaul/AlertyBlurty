@@ -1,0 +1,6 @@
+dist/
+node_modules/
+src/styles/open-iconic/
+vite.config.js
+vite.config.d.ts
+*.tsbuildinfo
