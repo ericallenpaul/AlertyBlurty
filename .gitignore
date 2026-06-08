@@ -407,3 +407,7 @@ appsettings.Development.json
 appsettings.Local.json
 *.user
 .vs/
+
+# Frontend build output
+src/alertblurty.Web/dist/
+*.tsbuildinfo

@@ -18,9 +18,12 @@ This project uses SemVer tags (`vMAJOR.MINOR.PATCH`) and GitHub Actions for CI a
 3. Push tag:
    - `git push origin v0.1.0`
 4. GitHub Action `.github/workflows/release.yml` runs automatically:
-   - builds and tests
+   - builds and tests the API
+   - installs, tests, and builds the React frontend
    - publishes API artifacts
+   - publishes web artifacts
    - creates a GitHub Release
+5. Deploy the API artifact to the API host and the web artifact to the static frontend host described in `docs/frontend-deployment.md`.
 
 ## Rollback
 
