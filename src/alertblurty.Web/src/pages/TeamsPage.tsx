@@ -147,15 +147,21 @@ export function TeamsPage() {
       )}
       {showCreate ? (
         <div
+          aria-labelledby="create-team-dialog-title"
+          aria-modal="true"
           className="modal show d-block"
+          role="dialog"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
           tabIndex={-1}
         >
           <div className="modal-dialog">
             <form className="modal-content" onSubmit={handleCreate}>
               <div className="modal-header bg-primary text-white">
-                <h2 className="h5 modal-title">Create Team</h2>
+                <h2 className="h5 modal-title" id="create-team-dialog-title">
+                  Create Team
+                </h2>
                 <button
+                  aria-label="Close create team dialog"
                   className="btn-close btn-close-white"
                   onClick={() => setShowCreate(false)}
                   type="button"

@@ -242,15 +242,24 @@ export function TeamDetailsPage() {
       </div>
       {showAdd ? (
         <div
+          aria-labelledby="add-team-member-dialog-title"
+          aria-modal="true"
           className="modal show d-block"
+          role="dialog"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
           tabIndex={-1}
         >
           <div className="modal-dialog">
             <form className="modal-content" onSubmit={handleAddMember}>
               <div className="modal-header bg-primary text-white">
-                <h2 className="h5 modal-title">Add Team Member</h2>
+                <h2
+                  className="h5 modal-title"
+                  id="add-team-member-dialog-title"
+                >
+                  Add Team Member
+                </h2>
                 <button
+                  aria-label="Close add member dialog"
                   className="btn-close btn-close-white"
                   onClick={() => setShowAdd(false)}
                   type="button"

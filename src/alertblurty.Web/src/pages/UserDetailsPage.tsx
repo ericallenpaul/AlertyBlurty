@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { deleteUser, getUser, updateUser } from "../api/users";
+import { useAuth } from "../auth/AuthProvider";
 import { ErrorAlert } from "../components/ErrorAlert";
 import { LoadingState } from "../components/LoadingState";
 import { RoleBadge } from "../components/Badges";
@@ -11,6 +12,7 @@ import { formatDate, timezones } from "./pageUtils";
 export function UserDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { claims } = useAuth();
   const [user, setUser] = useState<UserDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -21,6 +23,7 @@ export function UserDetailsPage() {
   const [timezone, setTimezone] = useState("America/New_York");
   const [role, setRole] = useState(UserRole.User);
   const [isActive, setIsActive] = useState(true);
+  const currentUserIsSuperAdmin = claims?.role === UserRole.SuperAdmin;
 
   useEffect(() => {
     async function loadUser() {
@@ -62,12 +65,17 @@ export function UserDetailsPage() {
     setIsUpdating(true);
     setError(null);
     try {
-      const updated = await updateUser(id, {
+      const request = {
         fullName: fullName.trim(),
         phoneNumber: phoneNumber.trim(),
         timezone,
-        role,
         isActive,
+        ...(currentUserIsSuperAdmin || user?.role !== UserRole.SuperAdmin
+          ? { role }
+          : {}),
+      };
+      const updated = await updateUser(id, {
+        ...request,
       });
       setUser(updated);
       setSuccess("User updated successfully!");
@@ -135,15 +143,17 @@ export function UserDetailsPage() {
           </h1>
           <p className="text-muted">{user.email}</p>
         </div>
-        <div className="col-auto">
-          <button
-            className="btn btn-outline-danger"
-            onClick={() => void handleDelete()}
-            type="button"
-          >
-            Delete User
-          </button>
-        </div>
+        {currentUserIsSuperAdmin ? (
+          <div className="col-auto">
+            <button
+              className="btn btn-outline-danger"
+              onClick={() => void handleDelete()}
+              type="button"
+            >
+              Delete User
+            </button>
+          </div>
+        ) : null}
       </div>
       {error ? <ErrorAlert>{error}</ErrorAlert> : null}
       {success ? (
@@ -207,23 +217,35 @@ export function UserDetailsPage() {
                     ))}
                   </select>
                 </div>
-                <div className="col-md-6 mb-3">
-                  <label className="form-label" htmlFor="editRole">
-                    Role
-                  </label>
-                  <select
-                    className="form-select"
-                    id="editRole"
-                    onChange={(event) =>
-                      setRole(Number(event.target.value) as UserRole)
-                    }
-                    value={role}
-                  >
-                    <option value={UserRole.User}>User</option>
-                    <option value={UserRole.Admin}>Admin</option>
-                    <option value={UserRole.SuperAdmin}>Super Admin</option>
-                  </select>
-                </div>
+                {currentUserIsSuperAdmin ||
+                user.role !== UserRole.SuperAdmin ? (
+                  <div className="col-md-6 mb-3">
+                    <label className="form-label" htmlFor="editRole">
+                      Role
+                    </label>
+                    <select
+                      className="form-select"
+                      id="editRole"
+                      onChange={(event) =>
+                        setRole(Number(event.target.value) as UserRole)
+                      }
+                      value={role}
+                    >
+                      <option value={UserRole.User}>User</option>
+                      <option value={UserRole.Admin}>Admin</option>
+                      {currentUserIsSuperAdmin ? (
+                        <option value={UserRole.SuperAdmin}>Super Admin</option>
+                      ) : null}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="col-md-6 mb-3">
+                    <span className="form-label d-block">Role</span>
+                    <p className="text-muted mb-0">
+                      Role changes are restricted for Super Admin accounts.
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="form-check mb-4">
                 <input

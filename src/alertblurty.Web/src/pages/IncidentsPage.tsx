@@ -8,11 +8,8 @@ import { SeverityBadge, StatusBadge } from "../components/Badges";
 import { IncidentStatus, type IncidentDto } from "../types/api";
 import { errorMessage, formatDate } from "./pageUtils";
 
-type StatusFilter = IncidentStatus | "all";
-
 export function IncidentsPage() {
   const [incidents, setIncidents] = useState<IncidentDto[]>([]);
-  const [filter, setFilter] = useState<StatusFilter>(IncidentStatus.Open);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null);
@@ -32,24 +29,11 @@ export function IncidentsPage() {
     void Promise.resolve().then(loadIncidents);
   }, []);
 
-  const counts = useMemo(
-    () => ({
-      open: incidents.filter(
-        (incident) => incident.status === IncidentStatus.Open,
-      ).length,
-      acknowledged: incidents.filter(
-        (incident) => incident.status === IncidentStatus.Acknowledged,
-      ).length,
-      resolved: incidents.filter(
-        (incident) => incident.status === IncidentStatus.Resolved,
-      ).length,
-    }),
+  const openIncidents = useMemo(
+    () =>
+      incidents.filter((incident) => incident.status === IncidentStatus.Open),
     [incidents],
   );
-  const filtered =
-    filter === "all"
-      ? incidents
-      : incidents.filter((incident) => incident.status === filter);
 
   async function handleAcknowledge(id: string) {
     setAcknowledgingId(id);
@@ -78,42 +62,12 @@ export function IncidentsPage() {
         </div>
       </div>
       {error ? <ErrorAlert>{error}</ErrorAlert> : null}
-      <div className="card shadow mb-4">
-        <div className="card-body">
-          <ul className="nav nav-tabs">
-            <FilterButton
-              active={filter === IncidentStatus.Open}
-              label={`Open (${counts.open})`}
-              onClick={() => setFilter(IncidentStatus.Open)}
-            />
-            <FilterButton
-              active={filter === IncidentStatus.Acknowledged}
-              label={`Acknowledged (${counts.acknowledged})`}
-              onClick={() => setFilter(IncidentStatus.Acknowledged)}
-            />
-            <FilterButton
-              active={filter === IncidentStatus.Resolved}
-              label={`Resolved (${counts.resolved})`}
-              onClick={() => setFilter(IncidentStatus.Resolved)}
-            />
-            <FilterButton
-              active={filter === "all"}
-              label={`All (${incidents.length})`}
-              onClick={() => setFilter("all")}
-            />
-          </ul>
-        </div>
-      </div>
       <div className="card shadow">
         <div className="card-header bg-primary text-white">
-          <h2 className="h5 mb-0">
-            {filter === "all"
-              ? "All Incidents"
-              : `${IncidentStatus[filter]} Incidents`}
-          </h2>
+          <h2 className="h5 mb-0">Open Incidents</h2>
         </div>
         <div className="card-body">
-          {filtered.length === 0 ? (
+          {openIncidents.length === 0 ? (
             <div className="text-center py-4 text-muted">
               No incidents found
             </div>
@@ -134,7 +88,7 @@ export function IncidentsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((incident) => (
+                  {openIncidents.map((incident) => (
                     <tr key={incident.id}>
                       <td>
                         <SeverityBadge severity={incident.severity} />
@@ -182,27 +136,5 @@ export function IncidentsPage() {
         </div>
       </div>
     </section>
-  );
-}
-
-function FilterButton({
-  active,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <li className="nav-item">
-      <button
-        className={`nav-link${active ? " active" : ""}`}
-        onClick={onClick}
-        type="button"
-      >
-        {label}
-      </button>
-    </li>
   );
 }
