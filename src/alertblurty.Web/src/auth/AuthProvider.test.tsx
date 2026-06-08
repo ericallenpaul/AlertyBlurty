@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AuthProvider, useAuth } from "./AuthProvider";
 import { UserRole, type AuthResponse } from "../types/api";
@@ -81,6 +81,11 @@ describe("AuthProvider", () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("initializes authenticated state from a valid stored token", () => {
@@ -128,6 +133,24 @@ describe("AuthProvider", () => {
 
     renderWithProvider(<AuthStateProbe />);
     await userEvent.click(screen.getByRole("button", { name: "Log out" }));
+
+    expect(screen.getByTestId("authenticated")).toHaveTextContent("false");
+    expect(window.localStorage.getItem("authToken")).toBeNull();
+  });
+
+  it("clears mounted auth state when the stored token expires", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-08T12:00:00Z"));
+    const expiresAt = Math.floor(Date.now() / 1000) + 5;
+    window.localStorage.setItem("authToken", validToken({ exp: expiresAt }));
+
+    renderWithProvider(<AuthStateProbe />);
+
+    expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5_000);
+    });
 
     expect(screen.getByTestId("authenticated")).toHaveTextContent("false");
     expect(window.localStorage.getItem("authToken")).toBeNull();

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthProvider";
@@ -9,6 +10,7 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 
 export function NavMenu() {
   const { claims, isAuthenticated } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
   const canManage =
     claims?.role === UserRole.Admin || claims?.role === UserRole.SuperAdmin;
 
@@ -19,51 +21,81 @@ export function NavMenu() {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container-fluid">
-        <NavLink className="navbar-brand" to="/dashboard">
+        <NavLink
+          className="navbar-brand"
+          onClick={() => setIsOpen(false)}
+          to="/dashboard"
+        >
           AlertyBlurty
         </NavLink>
         <button
           aria-controls="main-nav"
-          aria-expanded="false"
+          aria-expanded={isOpen}
           aria-label="Toggle navigation"
           className="navbar-toggler"
-          data-bs-target="#main-nav"
-          data-bs-toggle="collapse"
+          onClick={() => setIsOpen((current) => !current)}
           type="button"
         >
           <span className="navbar-toggler-icon" />
         </button>
-        <div className="collapse navbar-collapse" id="main-nav">
+        <div
+          className={`collapse navbar-collapse${isOpen ? " show" : ""}`}
+          id="main-nav"
+        >
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             <li className="nav-item">
-              <NavLink className={navLinkClass} to="/dashboard">
+              <NavLink
+                className={navLinkClass}
+                onClick={() => setIsOpen(false)}
+                to="/dashboard"
+              >
                 Dashboard
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className={navLinkClass} to="/incidents">
+              <NavLink
+                className={navLinkClass}
+                onClick={() => setIsOpen(false)}
+                to="/incidents"
+              >
                 Incidents
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className={navLinkClass} to="/teams">
+              <NavLink
+                className={navLinkClass}
+                onClick={() => setIsOpen(false)}
+                to="/teams"
+              >
                 Teams
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className={navLinkClass} to="/user-info">
+              <NavLink
+                className={navLinkClass}
+                onClick={() => setIsOpen(false)}
+                to="/user-info"
+              >
                 User Info
               </NavLink>
             </li>
             {canManage ? (
               <>
                 <li className="nav-item">
-                  <NavLink className={navLinkClass} to="/users">
+                  <NavLink
+                    className={navLinkClass}
+                    onClick={() => setIsOpen(false)}
+                    to="/users"
+                  >
                     Users
                   </NavLink>
                 </li>
                 <li className="nav-item">
-                  <NavLink className={navLinkClass} to="/setup">
+                  <NavLink
+                    className={navLinkClass}
+                    onClick={() => setIsOpen(false)}
+                    to="/setup"
+                  >
                     Setup
                   </NavLink>
                 </li>
@@ -72,7 +104,11 @@ export function NavMenu() {
           </ul>
           <ul className="navbar-nav">
             <li className="nav-item">
-              <NavLink className={navLinkClass} to="/logout">
+              <NavLink
+                className={navLinkClass}
+                onClick={() => setIsOpen(false)}
+                to="/logout"
+              >
                 Logout
               </NavLink>
             </li>
