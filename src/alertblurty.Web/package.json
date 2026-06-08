@@ -11,7 +11,7 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "lint": "eslint .",
-    "format": "prettier --check \"index.html\" \"eslint.config.js\" \"package.json\" \"tsconfig*.json\" \"vite.config.ts\" \"playwright.config.ts\" \"src/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\""
+    "format": "prettier --check --end-of-line auto \"index.html\" \"eslint.config.js\" \"package.json\" \"tsconfig*.json\" \"vite.config.ts\" \"playwright.config.ts\" \"src/**/*.{ts,tsx}\" \"tests/**/*.{ts,tsx}\""
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.12",
