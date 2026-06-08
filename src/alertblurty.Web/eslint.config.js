@@ -20,6 +20,7 @@ export default tseslint.config(
     languageOptions: {
       globals: {
         document: "readonly",
+        window: "readonly",
       },
     },
     plugins: {
