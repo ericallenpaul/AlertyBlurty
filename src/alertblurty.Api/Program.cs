@@ -137,9 +137,12 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = Dat
 
 // Map all endpoints
 app.MapAuthEndpoints();
+app.MapOrganizationEndpoints();
 app.MapUserEndpoints();
 app.MapTeamEndpoints();
 app.MapIncidentEndpoints();
 app.MapWebhookEndpoints();
 
 app.Run();
+
+public partial class Program;
