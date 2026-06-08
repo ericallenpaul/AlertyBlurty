@@ -14,6 +14,15 @@ public class OrganizationRepository : IOrganizationRepository
         _context = context;
     }
 
+    public async Task<List<OrganizationDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Organizations
+            .AsNoTracking()
+            .OrderBy(o => o.Name)
+            .Select(o => MapToDto(o))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<OrganizationDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var org = await _context.Organizations.FindAsync(new object[] { id }, cancellationToken);
