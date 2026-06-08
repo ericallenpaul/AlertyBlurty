@@ -91,6 +91,14 @@ This document lists all environment variables used by alertblurty.
   - **Default**: `http://localhost:5000`
   - **Required**: No
 
+### React Frontend Configuration
+
+- **`VITE_API_BASE_URL`**
+  - **Description**: API base URL used by the React frontend at dev/build time. Leave empty when serving the frontend from the same origin as the API, or when using the Vite dev proxy.
+  - **Example**: `http://localhost:5041`
+  - **Default**: Empty string
+  - **Required**: No
+
 ## Setting Environment Variables
 
 ### Local Development (Windows)
@@ -102,6 +110,7 @@ $env:JWT_SECRET="YourSecretKeyForDevelopment_MinimumLength32Chars"
 $env:TWILIO_ACCOUNT_SID="your_account_sid"
 $env:TWILIO_AUTH_TOKEN="your_auth_token"
 $env:TWILIO_PHONE_NUMBER="+15551234567"
+$env:VITE_API_BASE_URL="http://localhost:5041"
 ```
 
 ### Local Development (Linux/macOS)
@@ -113,6 +122,7 @@ export JWT_SECRET="YourSecretKeyForDevelopment_MinimumLength32Chars"
 export TWILIO_ACCOUNT_SID="your_account_sid"
 export TWILIO_AUTH_TOKEN="your_auth_token"
 export TWILIO_PHONE_NUMBER="+15551234567"
+export VITE_API_BASE_URL="http://localhost:5041"
 ```
 
 ### Docker
@@ -133,6 +143,7 @@ ZABBIX_API_URL=https://zabbix.example.com/api_jsonrpc.php
 ZABBIX_API_TOKEN=your_zabbix_token
 WEBHOOK_IP_ALLOWLIST=192.168.1.100,192.168.1.101
 AUDIT_LOG_RETENTION_DAYS=90
+VITE_API_BASE_URL=http://localhost:5041
 ```
 
 Then reference in `docker-compose.yml`:
@@ -213,6 +224,8 @@ To verify your configuration:
 
 ```bash
 dotnet run --project src/alertblurty.Api
+cd src/alertblurty.Web
+npm run dev
 ```
 
 Check the startup logs for any configuration errors.
