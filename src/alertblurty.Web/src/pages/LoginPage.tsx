@@ -43,6 +43,9 @@ export function LoginPage() {
     <main className="container py-5">
       <div className="row justify-content-center">
         <div className="col-12 col-sm-10 col-md-7 col-lg-5">
+          <div className="auth-logo-panel mb-4">
+            <img alt="AlertyBlurty" src="/alerty-blurty-logo.png" />
+          </div>
           <h1 className="h3 mb-3">Sign in</h1>
           {error ? (
             <div className="alert alert-danger" role="alert">

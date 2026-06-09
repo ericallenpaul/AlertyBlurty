@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,12 +12,13 @@ const authApi = vi.hoisted(() => ({
   register: vi.fn(),
 }));
 
-const organizationsApi = vi.hoisted(() => ({
-  hasOrganizations: vi.fn(),
+const setupApi = vi.hoisted(() => ({
+  bootstrapSetup: vi.fn(),
+  getSetupStatus: vi.fn(),
 }));
 
 vi.mock("../api/auth", () => authApi);
-vi.mock("../api/organizations", () => organizationsApi);
+vi.mock("../api/setup", () => setupApi);
 
 function tokenWithPayload(payload: Record<string, unknown>): string {
   const encode = (value: Record<string, unknown>) =>
@@ -67,13 +68,86 @@ describe("SetupPage", () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.clearAllMocks();
-    organizationsApi.hasOrganizations.mockResolvedValue(false);
+    setupApi.getSetupStatus.mockResolvedValue({
+      isConfigured: false,
+      databaseConfigured: true,
+      databaseReachable: true,
+      twilioConfigured: true,
+      jwtConfigured: true,
+      hasOrganizations: false,
+    });
+  });
+
+  it("collects database and twilio settings before organization setup", async () => {
+    setupApi.getSetupStatus.mockResolvedValue({
+      isConfigured: false,
+      databaseConfigured: false,
+      databaseReachable: false,
+      twilioConfigured: false,
+      jwtConfigured: false,
+      hasOrganizations: false,
+    });
+    setupApi.bootstrapSetup.mockResolvedValue(undefined);
+    renderSetup();
+
+    await screen.findByRole("heading", { name: "System Configuration" });
+    fireEvent.change(screen.getByLabelText("Server *"), {
+      target: { value: "postgres" },
+    });
+    fireEvent.change(screen.getByLabelText("Port *"), {
+      target: { value: "5432" },
+    });
+    fireEvent.change(screen.getByLabelText("Database Name *"), {
+      target: { value: "alertyblurty" },
+    });
+    fireEvent.change(screen.getByLabelText("Username *"), {
+      target: { value: "alerty_app" },
+    });
+    fireEvent.change(screen.getByLabelText("Password *"), {
+      target: { value: "db-secret" },
+    });
+    fireEvent.change(screen.getByLabelText("JWT Secret *"), {
+      target: { value: "jwt-secret-with-enough-length-for-tests" },
+    });
+    fireEvent.change(screen.getByLabelText("Account SID *"), {
+      target: { value: "AC123" },
+    });
+    fireEvent.change(screen.getByLabelText("Auth Token *"), {
+      target: { value: "twilio-token" },
+    });
+    fireEvent.change(screen.getByLabelText("Phone Number *"), {
+      target: { value: "+15555550100" },
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: /initialize database/i }),
+    );
+
+    await waitFor(() =>
+      expect(setupApi.bootstrapSetup).toHaveBeenCalledWith({
+        database: {
+          server: "postgres",
+          port: 5432,
+          databaseName: "alertyblurty",
+          username: "alerty_app",
+          password: "db-secret",
+        },
+        twilio: {
+          accountSid: "AC123",
+          authToken: "twilio-token",
+          phoneNumber: "+15555550100",
+        },
+        jwtSecret: "jwt-secret-with-enough-length-for-tests",
+      }),
+    );
+    expect(
+      screen.getByRole("heading", { name: "Organization Information" }),
+    ).toBeVisible();
   });
 
   it("validates required admin account fields before registering", async () => {
     renderSetup();
 
-    await screen.findByText("Step 1: Organization Information");
+    await screen.findByRole("heading", { name: "Organization Information" });
     await userEvent.type(
       screen.getByLabelText("Organization Name *"),
       "Acme Corporation",
@@ -93,7 +167,7 @@ describe("SetupPage", () => {
     authApi.register.mockResolvedValue(authResponse());
     renderSetup();
 
-    await screen.findByText("Step 1: Organization Information");
+    await screen.findByRole("heading", { name: "Organization Information" });
     await userEvent.type(
       screen.getByLabelText("Organization Name *"),
       "Acme Corporation",
@@ -128,7 +202,7 @@ describe("SetupPage", () => {
         timezone: "America/New_York",
       }),
     );
-    expect(screen.getByText("Setup Complete!")).toBeVisible();
+    expect(screen.getByText("Setup Complete")).toBeVisible();
     await userEvent.click(
       screen.getByRole("button", { name: /go to dashboard/i }),
     );

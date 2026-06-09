@@ -54,6 +54,35 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface SetupStatusResponse {
+  isConfigured: boolean;
+  databaseConfigured: boolean;
+  databaseReachable: boolean;
+  twilioConfigured: boolean;
+  jwtConfigured: boolean;
+  hasOrganizations: boolean;
+}
+
+export interface DatabaseBootstrapOptions {
+  server: string;
+  port: number;
+  databaseName: string;
+  username: string;
+  password: string;
+}
+
+export interface TwilioBootstrapOptions {
+  accountSid: string;
+  authToken: string;
+  phoneNumber: string;
+}
+
+export interface BootstrapSetupRequest {
+  database: DatabaseBootstrapOptions;
+  twilio: TwilioBootstrapOptions;
+  jwtSecret?: string;
+}
+
 export interface OrganizationDto extends BaseDto {
   name: string;
   defaultTimezone: string;

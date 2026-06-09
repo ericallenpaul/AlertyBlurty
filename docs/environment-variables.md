@@ -1,231 +1,137 @@
 # Environment Variables
 
-This document lists all environment variables used by alertblurty.
+AlertyBlurty supports two setup paths:
 
-## Required Variables
+- Set environment variables before startup, including one full PostgreSQL `CONNECTION_STRING`.
+- Start the app without database/Twilio values and complete the first-run setup wizard. The wizard asks for database server, port, database name, username, and password, then builds the connection string and runs EF migrations against a blank database.
 
-### Database Configuration
+Do not use a separate `DB_PASSWORD`; it is intentionally not supported.
 
-- **`DB_PASSWORD`**
-  - **Description**: PostgreSQL password for the runtime app user in the configured connection string.
-  - **Example**: `YourAppUserPassword123!`
-  - **Required**: Yes
-  - **Security**: Keep this secret! Store in User Secrets for development, environment variables for production.
+## Required for Environment-Based Setup
 
-- **`DB_MIGRATION_PASSWORD`**
-  - **Description**: PostgreSQL password for the EF migration user. Use this when running `dotnet ef database update --connection ...`.
-  - **Example**: `YourMigrationUserPassword123!`
-  - **Required**: For migration execution only
-  - **Security**: Keep this separate from `DB_PASSWORD`.
+### `CONNECTION_STRING`
 
-### JWT Authentication
+Full PostgreSQL connection string for the runtime app user.
 
-- **`JWT_SECRET`**
-  - **Description**: Secret key for signing JWT tokens (minimum 32 characters)
-  - **Example**: `YourSuperSecretKeyForJWTTokens123456789!@#$%^&*()`
-  - **Required**: Yes
-  - **Security**: Keep this secret! Use a strong, random value in production.
+Example:
 
-### Twilio SMS Configuration
+```text
+Host=postgres;Port=5432;Database=alertyblurty;Username=alerty_app;Password=AppPassword123!
+```
 
-- **`TWILIO_ACCOUNT_SID`**
-  - **Description**: Twilio account SID for SMS notifications
-  - **Example**: `ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
-  - **Required**: Yes (for SMS functionality)
+The database must already exist. AlertyBlurty will create and update tables during setup/migration, but it will not create the PostgreSQL database itself.
 
-- **`TWILIO_AUTH_TOKEN`**
-  - **Description**: Twilio authentication token
-  - **Example**: `your_auth_token_here`
-  - **Required**: Yes (for SMS functionality)
-  - **Security**: Keep this secret!
+### `JWT_SECRET`
 
-- **`TWILIO_PHONE_NUMBER`**
-  - **Description**: Twilio phone number to send SMS from
-  - **Example**: `+15551234567`
-  - **Required**: Yes (for SMS functionality)
+Secret key for signing JWT tokens. Use at least 32 characters.
+
+Example:
+
+```text
+replace-with-a-long-random-secret-at-least-32-chars
+```
+
+### `TWILIO_ACCOUNT_SID`
+
+Twilio account SID.
+
+Example:
+
+```text
+ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### `TWILIO_SECRET` or `TWILIO_AUTH_TOKEN`
+
+Twilio auth token. `TWILIO_SECRET` and `TWILIO_AUTH_TOKEN` are aliases; use one.
+
+Example:
+
+```text
+twilio_auth_token_here
+```
+
+### `TWILIO_PHONE_NUMBER`
+
+Twilio sender number in E.164 format.
+
+Example:
+
+```text
++15551234567
+```
 
 ## Optional Variables
 
-### JWT Configuration
+- `ALERTYBLURTY_CONFIG_PATH`: path for wizard-saved local configuration. Default: `src/alertblurty.Api/data/appsettings.Local.json` when running from source.
+- `ASPNETCORE_ENVIRONMENT`: `Development`, `Staging`, or `Production`.
+- `ASPNETCORE_URLS`: URLs the API listens on, such as `http://+:8080`.
+- `VITE_API_BASE_URL`: React dev/build API base URL. Leave empty when serving from the same origin or using the Vite proxy.
+- `WEBHOOK_IP_ALLOWLIST`: comma-separated webhook source IP allowlist.
+- `AUDIT_LOG_RETENTION_DAYS`: audit retention days.
 
-- **`JWT_ISSUER`**
-  - **Description**: JWT token issuer name
-  - **Default**: `alertblurty`
-  - **Required**: No
-
-- **`JWT_AUDIENCE`**
-  - **Description**: JWT token audience
-  - **Default**: `alertblurty-users`
-  - **Required**: No
-
-- **`JWT_EXPIRY_MINUTES`**
-  - **Description**: JWT token expiration time in minutes
-  - **Default**: `60`
-  - **Required**: No
-
-### Security Configuration
-
-- **`WEBHOOK_IP_ALLOWLIST`**
-  - **Description**: Comma-separated list of IP addresses allowed to send webhooks
-  - **Example**: `192.168.1.100,192.168.1.101,10.0.0.50`
-  - **Default**: Empty (allow all)
-  - **Required**: No
-  - **Recommended**: Set this in production for security
-
-- **`AUDIT_LOG_RETENTION_DAYS`**
-  - **Description**: Number of days to retain audit logs
-  - **Default**: `90`
-  - **Required**: No
-
-### ASP.NET Core Configuration
-
-- **`ASPNETCORE_ENVIRONMENT`**
-  - **Description**: Application environment
-  - **Values**: `Development`, `Staging`, `Production`
-  - **Default**: `Production`
-  - **Required**: No
-
-- **`ASPNETCORE_URLS`**
-  - **Description**: URLs the application listens on
-  - **Example**: `http://+:80;https://+:443`
-  - **Default**: `http://localhost:5000`
-  - **Required**: No
-
-### React Frontend Configuration
-
-- **`VITE_API_BASE_URL`**
-  - **Description**: API base URL used by the React frontend at dev/build time. Leave empty when serving the frontend from the same origin as the API, or when using the Vite dev proxy.
-  - **Example**: `http://localhost:5041`
-  - **Default**: Empty string
-  - **Required**: No
-
-## Setting Environment Variables
-
-### Local Development (Windows)
-
-```powershell
-$env:DB_PASSWORD="YourAppUserPassword"
-$env:DB_MIGRATION_PASSWORD="YourMigrationUserPassword"
-$env:JWT_SECRET="YourSecretKeyForDevelopment_MinimumLength32Chars"
-$env:TWILIO_ACCOUNT_SID="your_account_sid"
-$env:TWILIO_AUTH_TOKEN="your_auth_token"
-$env:TWILIO_PHONE_NUMBER="+15551234567"
-$env:VITE_API_BASE_URL="http://localhost:5041"
-```
-
-### Local Development (Linux/macOS)
+## Docker Example
 
 ```bash
-export DB_PASSWORD="YourAppUserPassword"
-export DB_MIGRATION_PASSWORD="YourMigrationUserPassword"
-export JWT_SECRET="YourSecretKeyForDevelopment_MinimumLength32Chars"
-export TWILIO_ACCOUNT_SID="your_account_sid"
-export TWILIO_AUTH_TOKEN="your_auth_token"
-export TWILIO_PHONE_NUMBER="+15551234567"
-export VITE_API_BASE_URL="http://localhost:5041"
+docker run --rm \
+  --name alertyblurty \
+  -p 8080:8080 \
+  -e ASPNETCORE_URLS="http://+:8080" \
+  -e CONNECTION_STRING="Host=postgres;Port=5432;Database=alertyblurty;Username=alerty_app;Password=AppPassword123!" \
+  -e JWT_SECRET="replace-with-a-long-random-secret-at-least-32-chars" \
+  -e TWILIO_ACCOUNT_SID="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -e TWILIO_SECRET="twilio_auth_token_here" \
+  -e TWILIO_PHONE_NUMBER="+15551234567" \
+  alertyblurty:latest
 ```
 
-### Docker
+## First-Run Wizard
 
-Create a `.env` file:
+The wizard stores supplied database, JWT, and Twilio values in an ignored local config file and then initializes the blank database with EF migrations.
 
-```env
-DB_PASSWORD=YourAppUserPassword
-DB_MIGRATION_PASSWORD=YourMigrationUserPassword
-JWT_SECRET=YourSecretKeyHere_ChangeInProduction
-JWT_ISSUER=alertblurty
-JWT_AUDIENCE=alertblurty-users
-JWT_EXPIRY_MINUTES=60
-TWILIO_ACCOUNT_SID=your_account_sid
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_PHONE_NUMBER=+15551234567
-ZABBIX_API_URL=https://zabbix.example.com/api_jsonrpc.php
-ZABBIX_API_TOKEN=your_zabbix_token
-WEBHOOK_IP_ALLOWLIST=192.168.1.100,192.168.1.101
-AUDIT_LOG_RETENTION_DAYS=90
-VITE_API_BASE_URL=http://localhost:5041
+Database fields collected by the wizard:
+
+- Server: `postgres` or `localhost`
+- Port: `5432`
+- Database name: `alertyblurty`
+- Username: `alerty_app`
+- Password: the app database user password
+
+Twilio fields collected by the wizard:
+
+- Account SID
+- Auth token
+- Sender phone number
+
+## Database User Standard
+
+Use a separate migration owner and runtime app user:
+
+```sql
+CREATE ROLE alerty_migration LOGIN PASSWORD 'MigrationPassword123!';
+CREATE ROLE alerty_app LOGIN PASSWORD 'AppPassword123!';
+CREATE DATABASE alertyblurty OWNER alerty_migration;
+GRANT CONNECT ON DATABASE alertyblurty TO alerty_app;
+
+\connect alertyblurty
+ALTER SCHEMA public OWNER TO alerty_migration;
+GRANT CREATE, USAGE ON SCHEMA public TO alerty_migration;
+GRANT USAGE ON SCHEMA public TO alerty_app;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE alerty_migration IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO alerty_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE alerty_migration IN SCHEMA public
+  GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO alerty_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE alerty_migration IN SCHEMA public
+  GRANT EXECUTE ON FUNCTIONS TO alerty_app;
 ```
 
-Then reference in `docker-compose.yml`:
+The setup wizard should be run with a connection string for the user that is allowed to apply migrations to the blank database. For least privilege, run migrations with the migration owner, then switch runtime `CONNECTION_STRING` to the app user.
 
-```yaml
-services:
-  alertblurty:
-    image: alertblurty:latest
-    env_file:
-      - .env
-```
+## Security
 
-### Kubernetes
-
-Create a Secret:
-
-```bash
-kubectl create secret generic alertblurty-secrets \
-  --from-literal=DB_PASSWORD='YourAppUserPassword' \
-  --from-literal=JWT_SECRET='YourSecretKeyHere_ChangeInProduction' \
-  --from-literal=TWILIO_ACCOUNT_SID='your_account_sid' \
-  --from-literal=TWILIO_AUTH_TOKEN='your_auth_token' \
-  --from-literal=TWILIO_PHONE_NUMBER='+15551234567' \
-  --from-literal=ZABBIX_API_TOKEN='your_zabbix_token' \
-  -n alertblurty
-```
-
-### Visual Studio User Secrets (Local Development - Recommended)
-
-For local development, use .NET User Secrets feature to store sensitive data securely:
-
-```bash
-cd src/alertblurty.Api
-dotnet user-secrets init
-dotnet user-secrets set "DB_PASSWORD" "YourLocalPassword"
-dotnet user-secrets set "DB_MIGRATION_PASSWORD" "YourLocalMigrationPassword"
-dotnet user-secrets set "JWT_SECRET" "YourSecretKeyForDevelopment_MinimumLength32Chars"
-dotnet user-secrets set "TWILIO_ACCOUNT_SID" "your_account_sid"
-dotnet user-secrets set "TWILIO_AUTH_TOKEN" "your_auth_token"
-dotnet user-secrets set "TWILIO_PHONE_NUMBER" "+15551234567"
-```
-
-User Secrets are stored outside the project directory at:
-- **Windows**: `%APPDATA%\Microsoft\UserSecrets\<user_secrets_id>\secrets.json`
-- **Linux/macOS**: `~/.microsoft/usersecrets/<user_secrets_id>/secrets.json`
-
-## Security Best Practices
-
-1. **Never commit secrets to version control**
-   - Use `.gitignore` to exclude files containing secrets
-   - Use environment variables or secret management systems
-
-2. **Use strong, random values for JWT_SECRET**
-   - Minimum 32 characters
-   - Use a cryptographically secure random generator
-
-3. **Rotate secrets regularly**
-   - Establish a rotation policy for all API tokens and secrets
-   - Update secrets in all environments when rotating
-
-4. **Use different secrets for each environment**
-   - Development, staging, and production should have unique secrets
-   - Never use production secrets in development
-
-5. **Restrict database access**
-   - Use dedicated database users with minimum required privileges
-   - Enable SSL/TLS for database connections in production
-
-6. **Configure IP allowlisting for webhooks**
-   - Set `WEBHOOK_IP_ALLOWLIST` to restrict webhook sources
-   - Update the list when Zabbix server IP changes
-
-## Validation
-
-The application will validate environment variables on startup. Missing required variables will cause the application to fail with an error message indicating which variables are missing.
-
-To verify your configuration:
-
-```bash
-dotnet run --project src/alertblurty.Api
-cd src/alertblurty.Web
-npm run dev
-```
-
-Check the startup logs for any configuration errors.
+- Never commit `.env`, `appsettings.Local.json`, or files under `src/alertblurty.Api/data/`.
+- Use a strong random `JWT_SECRET`.
+- Use different secrets for development, staging, and production.
+- Restrict database access to the AlertyBlurty host.
+- Rotate Twilio and JWT secrets on a regular schedule.

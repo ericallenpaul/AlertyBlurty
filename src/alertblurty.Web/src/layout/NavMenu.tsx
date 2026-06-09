@@ -22,11 +22,15 @@ export function NavMenu() {
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container-fluid">
         <NavLink
-          className="navbar-brand"
+          className="navbar-brand d-flex align-items-center"
           onClick={() => setIsOpen(false)}
           to="/dashboard"
         >
-          AlertyBlurty
+          <img
+            alt="AlertyBlurty"
+            className="navbar-logo"
+            src="/alerty-blurty-logo.png"
+          />
         </NavLink>
         <button
           aria-controls="main-nav"
@@ -80,26 +84,15 @@ export function NavMenu() {
               </NavLink>
             </li>
             {canManage ? (
-              <>
-                <li className="nav-item">
-                  <NavLink
-                    className={navLinkClass}
-                    onClick={() => setIsOpen(false)}
-                    to="/users"
-                  >
-                    Users
-                  </NavLink>
-                </li>
-                <li className="nav-item">
-                  <NavLink
-                    className={navLinkClass}
-                    onClick={() => setIsOpen(false)}
-                    to="/setup"
-                  >
-                    Setup
-                  </NavLink>
-                </li>
-              </>
+              <li className="nav-item">
+                <NavLink
+                  className={navLinkClass}
+                  onClick={() => setIsOpen(false)}
+                  to="/users"
+                >
+                  Users
+                </NavLink>
+              </li>
             ) : null}
           </ul>
           <ul className="navbar-nav">
