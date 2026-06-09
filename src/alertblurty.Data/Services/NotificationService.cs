@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
@@ -11,43 +10,34 @@ namespace alertblurty.Data.Services;
 public class NotificationService : INotificationService
 {
     private readonly ILogger<NotificationService> _logger;
-    private readonly IConfiguration _configuration;
+    private readonly IAlertBlurtyRuntimeConfiguration _configuration;
     private readonly AlertBlurtyDbContext _context;
-    private readonly string _twilioAccountSid;
-    private readonly string _twilioAuthToken;
-    private readonly string _twilioPhoneNumber;
 
     public NotificationService(
         ILogger<NotificationService> logger,
-        IConfiguration configuration,
+        IAlertBlurtyRuntimeConfiguration configuration,
         AlertBlurtyDbContext context)
     {
         _logger = logger;
         _configuration = configuration;
         _context = context;
-
-        _twilioAccountSid = _configuration["TWILIO_ACCOUNT_SID"]
-            ?? _configuration["Twilio:AccountSid"]
-            ?? throw new InvalidOperationException("Twilio Account SID not configured");
-
-        _twilioAuthToken = _configuration["TWILIO_AUTH_TOKEN"]
-            ?? _configuration["Twilio:AuthToken"]
-            ?? throw new InvalidOperationException("Twilio Auth Token not configured");
-
-        _twilioPhoneNumber = _configuration["TWILIO_PHONE_NUMBER"]
-            ?? _configuration["Twilio:PhoneNumber"]
-            ?? throw new InvalidOperationException("Twilio Phone Number not configured");
-
-        TwilioClient.Init(_twilioAccountSid, _twilioAuthToken);
     }
 
     public async Task<bool> SendSmsAsync(string phoneNumber, string message, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (!_configuration.Twilio.IsConfigured)
+            {
+                _logger.LogWarning("Twilio is not configured. SMS to {PhoneNumber} was not sent.", phoneNumber);
+                return false;
+            }
+
+            TwilioClient.Init(_configuration.Twilio.AccountSid, _configuration.Twilio.AuthToken);
+
             var messageResource = await MessageResource.CreateAsync(
                 to: new PhoneNumber(phoneNumber),
-                from: new PhoneNumber(_twilioPhoneNumber),
+                from: new PhoneNumber(_configuration.Twilio.PhoneNumber),
                 body: message);
 
             _logger.LogInformation("SMS sent successfully. SID: {MessageSid}, Status: {Status}",

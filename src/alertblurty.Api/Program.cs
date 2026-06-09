@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using NLog.Web;
+using alertblurty.Api.Configuration;
 using alertblurty.Api.Endpoints;
 using alertblurty.Api.Middleware;
 using alertblurty.Data;
@@ -17,17 +18,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Host.UseNLog();
 
+var localConfigPath = builder.Configuration["ALERTYBLURTY_CONFIG_PATH"]
+    ?? Path.Combine(builder.Environment.ContentRootPath, "data", "appsettings.Local.json");
+
+builder.Configuration.AddJsonFile(localConfigPath, optional: true, reloadOnChange: true);
+builder.Configuration.AddEnvironmentVariables();
+
+var runtimeConfiguration = new BootstrapConfigurationStore(builder.Configuration, builder.Environment);
+builder.Services.AddSingleton(runtimeConfiguration);
+builder.Services.AddSingleton<IAlertBlurtyRuntimeConfiguration>(runtimeConfiguration);
+
 // Configure Database
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var dbPassword = builder.Configuration["DB_PASSWORD"] ?? Environment.GetEnvironmentVariable("DB_PASSWORD");
-
-if (!string.IsNullOrEmpty(dbPassword))
+builder.Services.AddDbContext<AlertBlurtyDbContext>((serviceProvider, options) =>
 {
-    connectionString += $";Password={dbPassword}";
-}
-
-builder.Services.AddDbContext<AlertBlurtyDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    var configuration = serviceProvider.GetRequiredService<IAlertBlurtyRuntimeConfiguration>();
+    options.UseNpgsql(configuration.GetRequiredConnectionString());
+});
 
 // Register Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -42,10 +48,6 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 
-// Configure JWT Authentication
-var jwtSecret = builder.Configuration["JWT_SECRET"] ?? builder.Configuration["JwtSettings:Secret"]
-    ?? throw new InvalidOperationException("JWT secret not configured");
-
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -59,9 +61,13 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "AlertyBlurty",
-        ValidAudience = builder.Configuration["JwtSettings:Audience"] ?? "AlertyBlurty",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret))
+        ValidIssuer = runtimeConfiguration.JwtIssuer,
+        ValidAudience = runtimeConfiguration.JwtAudience,
+        IssuerSigningKeyResolver = (_, _, _, _) =>
+        {
+            var jwtSecret = runtimeConfiguration.GetRequiredJwtSecret();
+            return [new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret))];
+        }
     };
 });
 
@@ -136,6 +142,7 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = Dat
     .WithName("HealthCheck");
 
 // Map all endpoints
+app.MapSetupEndpoints();
 app.MapAuthEndpoints();
 app.MapOrganizationEndpoints();
 app.MapUserEndpoints();

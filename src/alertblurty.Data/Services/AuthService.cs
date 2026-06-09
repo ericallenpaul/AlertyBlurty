@@ -1,7 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using alertblurty.Models.DTOs;
 using alertblurty.Models.Interfaces;
@@ -15,13 +14,13 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly IOrganizationRepository _organizationRepository;
     private readonly IPasswordHasher _passwordHasher;
-    private readonly IConfiguration _configuration;
+    private readonly IAlertBlurtyRuntimeConfiguration _configuration;
 
     public AuthService(
         IUserRepository userRepository,
         IOrganizationRepository organizationRepository,
         IPasswordHasher passwordHasher,
-        IConfiguration configuration)
+        IAlertBlurtyRuntimeConfiguration configuration)
     {
         _userRepository = userRepository;
         _organizationRepository = organizationRepository;
@@ -115,8 +114,7 @@ public class AuthService : IAuthService
 
     public Task<string> GenerateJwtTokenAsync(Guid userId, string email, string role, Guid organizationId)
     {
-        var jwtSecret = _configuration["JWT_SECRET"] ?? _configuration["JwtSettings:Secret"]
-            ?? throw new InvalidOperationException("JWT secret not configured");
+        var jwtSecret = _configuration.GetRequiredJwtSecret();
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(jwtSecret);
@@ -134,8 +132,8 @@ public class AuthService : IAuthService
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key),
                 SecurityAlgorithms.HmacSha256Signature),
-            Issuer = _configuration["JwtSettings:Issuer"] ?? "AlertyBlurty",
-            Audience = _configuration["JwtSettings:Audience"] ?? "AlertyBlurty"
+            Issuer = _configuration.JwtIssuer,
+            Audience = _configuration.JwtAudience
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -144,7 +142,6 @@ public class AuthService : IAuthService
 
     private int GetTokenExpirationHours()
     {
-        var hours = _configuration["JwtSettings:ExpirationHours"];
-        return int.TryParse(hours, out var result) ? result : 24;
+        return _configuration.JwtExpirationHours;
     }
 }

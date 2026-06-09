@@ -54,16 +54,16 @@ alertblurty is a self-hosted on-call alert management system that receives webho
      GRANT EXECUTE ON FUNCTIONS TO alertyblurty_app;
    ```
 
-3. **Configure User Secrets (Local Development)**
+3. **Configure secrets (Local Development)**
 
-   Store sensitive configuration in .NET User Secrets (outside the repository):
+   Store sensitive configuration in .NET User Secrets (outside the repository), or provide database and Twilio settings in the first-run setup wizard:
    ```bash
    cd src/alertblurty.Api
    dotnet user-secrets init
-   dotnet user-secrets set "DB_PASSWORD" "app_password"
+   dotnet user-secrets set "CONNECTION_STRING" "Host=localhost;Port=5432;Database=alertyblurty;Username=alertyblurty_app;Password=app_password"
    dotnet user-secrets set "JWT_SECRET" "your_jwt_secret_minimum_32_characters"
    dotnet user-secrets set "TWILIO_ACCOUNT_SID" "your_twilio_account_sid"
-   dotnet user-secrets set "TWILIO_AUTH_TOKEN" "your_twilio_auth_token"
+   dotnet user-secrets set "TWILIO_SECRET" "your_twilio_auth_token"
    dotnet user-secrets set "TWILIO_PHONE_NUMBER" "+15551234567"
    ```
 
@@ -71,25 +71,19 @@ alertblurty is a self-hosted on-call alert management system that receives webho
    - Windows: `%APPDATA%\Microsoft\UserSecrets\<user_secrets_id>\secrets.json`
    - Linux/macOS: `~/.microsoft/usersecrets/<user_secrets_id>/secrets.json`
 
-4. **Update appsettings.json (Non-Secret Config)**
+4. **Optional appsettings.json defaults**
 
-   The connection string in `src/alertblurty.Api/appsettings.json` should be:
+   You can keep non-secret JWT defaults in `src/alertblurty.Api/appsettings.json`:
    ```json
    {
-     "ConnectionStrings": {
-       "DefaultConnection": "Host=localhost;Port=5432;Database=alertyblurty;Username=alertyblurty_app"
-     },
      "JwtSettings": {
        "Issuer": "AlertyBlurty",
        "Audience": "AlertyBlurty",
        "ExpirationHours": 24
-     },
-     "Twilio": {
-       "PhoneNumber": "+1234567890"
      }
    }
    ```
-   Note: the app role password is loaded from User Secrets or `DB_PASSWORD`, not stored in appsettings.json.
+   Do not commit passwords, Twilio secrets, or generated setup config.
 
 5. **Build the backend and frontend**
    ```bash
@@ -100,14 +94,7 @@ alertblurty is a self-hosted on-call alert management system that receives webho
    cd ../..
    ```
 
-6. **Run database migrations**
-   ```bash
-   cd src/alertblurty.Api
-   dotnet ef database update --project ../alertblurty.Data --connection "Host=localhost;Port=5432;Database=alertyblurty;Username=alertyblurty_migration;Password=migration_password"
-   ```
-   This creates 11 tables with proper indexes and foreign key relationships.
-
-7. **Run the API**
+6. **Run the API**
    ```bash
    dotnet run --project src/alertblurty.Api/alertblurty.Api.csproj
    ```
@@ -115,7 +102,7 @@ alertblurty is a self-hosted on-call alert management system that receives webho
    - HTTP: `http://localhost:5041`
    - Swagger UI: `http://localhost:5041/swagger`
 
-8. **Run the React frontend**
+7. **Run the React frontend**
 
    In a second terminal:
    ```bash
@@ -130,20 +117,25 @@ alertblurty is a self-hosted on-call alert management system that receives webho
    VITE_API_BASE_URL=http://localhost:5041 npm run dev
    ```
 
-9. **Register your organization**
+8. **Initialize and register your organization**
 
-   Open the web UI and use the first-run setup wizard, or use the API directly as documented in `docs/api-guide.md`.
+   Open the web UI and use the first-run setup wizard. If `CONNECTION_STRING` and Twilio variables are not already set, the wizard asks for database server, port, database name, username, password, and Twilio settings, then applies EF migrations to the blank database.
 
    See `docs/api-guide.md` for complete API documentation and examples.
 
 ### Docker Deployment
 
 ```bash
-# Build Docker image
-docker build -t alertblurty -f docker/Dockerfile .
-
-# Run with Docker Compose
-docker-compose -f docker/docker-compose.yml up
+docker run --rm \
+  --name alertyblurty \
+  -p 8080:8080 \
+  -e ASPNETCORE_URLS="http://+:8080" \
+  -e CONNECTION_STRING="Host=postgres;Port=5432;Database=alertyblurty;Username=alerty_app;Password=AppPassword123!" \
+  -e JWT_SECRET="replace-with-a-long-random-secret-at-least-32-chars" \
+  -e TWILIO_ACCOUNT_SID="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -e TWILIO_SECRET="twilio_auth_token_here" \
+  -e TWILIO_PHONE_NUMBER="+15551234567" \
+  alertyblurty:latest
 ```
 
 ### Kubernetes Deployment
@@ -163,10 +155,10 @@ kubectl apply -f k8s/service.yaml
 
 **Required Variables:**
 
-- `DB_PASSWORD`: PostgreSQL database password (stored in User Secrets for local development)
+- `CONNECTION_STRING`: PostgreSQL connection string, including username and password
 - `JWT_SECRET`: Secret key for JWT token generation (minimum 32 characters)
 - `TWILIO_ACCOUNT_SID`: Twilio account SID for SMS notifications
-- `TWILIO_AUTH_TOKEN`: Twilio authentication token
+- `TWILIO_SECRET` or `TWILIO_AUTH_TOKEN`: Twilio authentication token
 - `TWILIO_PHONE_NUMBER`: Twilio phone number to send SMS from (E.164 format)
 
 **Optional Variables:**

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthProvider";
-import { hasOrganizations } from "../api/organizations";
+import { getSetupStatus } from "../api/setup";
 import { ErrorAlert } from "../components/ErrorAlert";
 import { LoadingState } from "../components/LoadingState";
 
@@ -21,7 +21,8 @@ export function HomeRedirect() {
     setDestination(null);
 
     try {
-      setDestination((await hasOrganizations()) ? "/login" : "/setup");
+      const status = await getSetupStatus();
+      setDestination(status.hasOrganizations ? "/login" : "/setup");
     } catch {
       setHasError(true);
     }

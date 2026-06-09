@@ -1,11 +1,13 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { hasOrganizations } from "../api/organizations";
+import { bootstrapSetup, getSetupStatus } from "../api/setup";
 import { useAuth } from "../auth/AuthProvider";
 import { ErrorAlert } from "../components/ErrorAlert";
 import { LoadingState } from "../components/LoadingState";
 import { timezones } from "./pageUtils";
+
+type SetupStep = 1 | 2 | 3 | 4;
 
 export function SetupPage() {
   const { register } = useAuth();
@@ -13,8 +15,18 @@ export function SetupPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [setupComplete, setSetupComplete] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<SetupStep>(1);
   const [error, setError] = useState<string | null>(null);
+  const [jwtConfigured, setJwtConfigured] = useState(false);
+  const [databaseServer, setDatabaseServer] = useState("postgres");
+  const [databasePort, setDatabasePort] = useState("5432");
+  const [databaseName, setDatabaseName] = useState("alertyblurty");
+  const [databaseUsername, setDatabaseUsername] = useState("alerty_app");
+  const [databasePassword, setDatabasePassword] = useState("");
+  const [twilioAccountSid, setTwilioAccountSid] = useState("");
+  const [twilioAuthToken, setTwilioAuthToken] = useState("");
+  const [twilioPhoneNumber, setTwilioPhoneNumber] = useState("");
+  const [jwtSecret, setJwtSecret] = useState("");
   const [organizationName, setOrganizationName] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,7 +38,19 @@ export function SetupPage() {
   useEffect(() => {
     async function loadSetupStatus() {
       try {
-        setSetupComplete(await hasOrganizations());
+        const status = await getSetupStatus();
+        setJwtConfigured(status.jwtConfigured);
+        setSetupComplete(status.hasOrganizations);
+
+        if (
+          !status.hasOrganizations &&
+          status.databaseConfigured &&
+          status.databaseReachable &&
+          status.twilioConfigured &&
+          status.jwtConfigured
+        ) {
+          setStep(2);
+        }
       } catch {
         setSetupComplete(false);
       } finally {
@@ -37,9 +61,51 @@ export function SetupPage() {
     void loadSetupStatus();
   }, []);
 
+  async function handleBootstrapSystem(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const validationError = validateSystemConfiguration();
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      await bootstrapSetup({
+        database: {
+          server: databaseServer.trim(),
+          port: Number(databasePort),
+          databaseName: databaseName.trim(),
+          username: databaseUsername.trim(),
+          password: databasePassword,
+        },
+        twilio: {
+          accountSid: twilioAccountSid.trim(),
+          authToken: twilioAuthToken,
+          phoneNumber: twilioPhoneNumber.trim(),
+        },
+        jwtSecret: jwtConfigured ? undefined : jwtSecret,
+      });
+
+      setJwtConfigured(true);
+      setStep(2);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? `Error: ${submitError.message}`
+          : "Error: Failed to save system configuration.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   async function handleCompleteSetup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const validationError = validateSetup();
+    const validationError = validateAdminAccount();
 
     if (validationError) {
       setError(validationError);
@@ -64,7 +130,7 @@ export function SetupPage() {
         return;
       }
 
-      setStep(3);
+      setStep(4);
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -76,7 +142,33 @@ export function SetupPage() {
     }
   }
 
-  function validateSetup() {
+  function validateSystemConfiguration() {
+    if (
+      !databaseServer.trim() ||
+      !databasePort.trim() ||
+      !databaseName.trim() ||
+      !databaseUsername.trim() ||
+      !databasePassword ||
+      !twilioAccountSid.trim() ||
+      !twilioAuthToken ||
+      !twilioPhoneNumber.trim()
+    ) {
+      return "Please fill in all system configuration fields.";
+    }
+
+    const parsedPort = Number(databasePort);
+    if (!Number.isInteger(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+      return "Database port must be between 1 and 65535.";
+    }
+
+    if (!jwtConfigured && jwtSecret.trim().length < 32) {
+      return "JWT secret must be at least 32 characters long.";
+    }
+
+    return null;
+  }
+
+  function validateAdminAccount() {
     if (
       !organizationName.trim() ||
       !fullName.trim() ||
@@ -108,7 +200,7 @@ export function SetupPage() {
     return (
       <main className="container mt-4">
         <div className="alert alert-success" role="alert">
-          <h1 className="h4 alert-heading">Setup Already Complete!</h1>
+          <h1 className="h4 alert-heading">Setup Already Complete</h1>
           <p>AlertyBlurty is already configured. You can now log in.</p>
           <button
             className="btn btn-primary"
@@ -123,43 +215,137 @@ export function SetupPage() {
   }
 
   return (
-    <main className="container mt-4">
+    <main className="setup-page container py-4">
       <div className="row justify-content-center">
-        <div className="col-md-8">
-          <div className="card shadow">
-            <div className="card-header bg-primary text-white">
-              <h1 className="h3 mb-0">Welcome to AlertyBlurty</h1>
-              <small>Let's get you set up in just a few steps</small>
+        <div className="col-12 col-lg-9">
+          <div className="card setup-card shadow">
+            <div className="card-header setup-card-header">
+              <img
+                alt="AlertyBlurty"
+                className="setup-logo"
+                src="/alerty-blurty-logo.png"
+              />
             </div>
             <div className="card-body">
               <div className="mb-4">
-                <div className="progress" style={{ height: 5 }}>
+                <div className="progress" style={{ height: 6 }}>
                   <div
                     aria-valuemax={100}
                     aria-valuemin={0}
-                    aria-valuenow={(step / 3) * 100}
+                    aria-valuenow={(step / 4) * 100}
                     className="progress-bar"
                     role="progressbar"
-                    style={{ width: `${(step / 3) * 100}%` }}
+                    style={{ width: `${(step / 4) * 100}%` }}
                   />
                 </div>
-                <div className="d-flex justify-content-between mt-2 small text-muted">
-                  <span className={step >= 1 ? "fw-bold" : ""}>
+                <div className="setup-steps mt-2 small">
+                  <span className={step >= 1 ? "active" : ""}>System</span>
+                  <span className={step >= 2 ? "active" : ""}>
                     Organization
                   </span>
-                  <span className={step >= 2 ? "fw-bold" : ""}>
-                    Admin Account
-                  </span>
-                  <span className={step >= 3 ? "fw-bold" : ""}>Complete</span>
+                  <span className={step >= 3 ? "active" : ""}>Admin</span>
+                  <span className={step >= 4 ? "active" : ""}>Complete</span>
                 </div>
               </div>
 
               {error ? <ErrorAlert>{error}</ErrorAlert> : null}
 
               {step === 1 ? (
+                <form onSubmit={handleBootstrapSystem}>
+                  <h1 className="h4">System Configuration</h1>
+                  <p className="text-muted">
+                    Connect AlertyBlurty to a blank PostgreSQL database and SMS
+                    provider.
+                  </p>
+                  <h2 className="h5 mt-4">Database</h2>
+                  <div className="row">
+                    <Field
+                      id="databaseServer"
+                      label="Server *"
+                      onChange={setDatabaseServer}
+                      value={databaseServer}
+                    />
+                    <Field
+                      id="databasePort"
+                      label="Port *"
+                      onChange={setDatabasePort}
+                      type="number"
+                      value={databasePort}
+                    />
+                  </div>
+                  <div className="row">
+                    <Field
+                      id="databaseName"
+                      label="Database Name *"
+                      onChange={setDatabaseName}
+                      value={databaseName}
+                    />
+                    <Field
+                      id="databaseUsername"
+                      label="Username *"
+                      onChange={setDatabaseUsername}
+                      value={databaseUsername}
+                    />
+                  </div>
+                  <div className="row">
+                    <Field
+                      id="databasePassword"
+                      label="Password *"
+                      onChange={setDatabasePassword}
+                      type="password"
+                      value={databasePassword}
+                    />
+                    {!jwtConfigured ? (
+                      <Field
+                        id="jwtSecret"
+                        label="JWT Secret *"
+                        onChange={setJwtSecret}
+                        type="password"
+                        value={jwtSecret}
+                      />
+                    ) : null}
+                  </div>
+                  <h2 className="h5 mt-4">Twilio</h2>
+                  <div className="row">
+                    <Field
+                      id="twilioAccountSid"
+                      label="Account SID *"
+                      onChange={setTwilioAccountSid}
+                      value={twilioAccountSid}
+                    />
+                    <Field
+                      id="twilioAuthToken"
+                      label="Auth Token *"
+                      onChange={setTwilioAuthToken}
+                      type="password"
+                      value={twilioAuthToken}
+                    />
+                  </div>
+                  <div className="row">
+                    <Field
+                      id="twilioPhoneNumber"
+                      label="Phone Number *"
+                      onChange={setTwilioPhoneNumber}
+                      type="tel"
+                      value={twilioPhoneNumber}
+                    />
+                  </div>
+                  <div className="d-flex justify-content-end">
+                    <button
+                      className="btn btn-primary"
+                      disabled={isSubmitting}
+                      type="submit"
+                    >
+                      {isSubmitting ? "Initializing..." : "Initialize Database"}
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+
+              {step === 2 ? (
                 <section>
-                  <h2 className="h4">Step 1: Organization Information</h2>
-                  <p className="text-muted">Tell us about your organization</p>
+                  <h1 className="h4">Organization Information</h1>
+                  <p className="text-muted">Create the first organization.</p>
                   <div className="mb-3">
                     <label className="form-label" htmlFor="organizationName">
                       Organization Name *
@@ -174,13 +360,20 @@ export function SetupPage() {
                       value={organizationName}
                     />
                   </div>
-                  <div className="d-flex justify-content-end">
+                  <div className="d-flex justify-content-between gap-2">
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => setStep(1)}
+                      type="button"
+                    >
+                      Back
+                    </button>
                     <button
                       className="btn btn-primary"
                       disabled={!organizationName.trim()}
                       onClick={() => {
                         setError(null);
-                        setStep(2);
+                        setStep(3);
                       }}
                       type="button"
                     >
@@ -190,11 +383,11 @@ export function SetupPage() {
                 </section>
               ) : null}
 
-              {step === 2 ? (
+              {step === 3 ? (
                 <form onSubmit={handleCompleteSetup}>
-                  <h2 className="h4">Step 2: Create Administrator Account</h2>
+                  <h1 className="h4">Create Administrator Account</h1>
                   <p className="text-muted">
-                    This will be the first SuperAdmin user
+                    This will be the first SuperAdmin user.
                   </p>
                   <div className="row">
                     <Field
@@ -257,7 +450,7 @@ export function SetupPage() {
                   <div className="d-flex justify-content-between gap-2">
                     <button
                       className="btn btn-secondary"
-                      onClick={() => setStep(1)}
+                      onClick={() => setStep(2)}
                       type="button"
                     >
                       Back
@@ -273,9 +466,9 @@ export function SetupPage() {
                 </form>
               ) : null}
 
-              {step === 3 ? (
+              {step === 4 ? (
                 <section className="text-center py-4">
-                  <h2 className="h4">Setup Complete!</h2>
+                  <h1 className="h4">Setup Complete</h1>
                   <p className="text-muted">
                     Your AlertyBlurty instance is ready to use.
                   </p>

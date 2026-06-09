@@ -4,11 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 import { AuthProvider } from "./auth/AuthProvider";
 
-const organizationsApi = vi.hoisted(() => ({
-  hasOrganizations: vi.fn(),
+const setupApi = vi.hoisted(() => ({
+  getSetupStatus: vi.fn(),
 }));
 
-vi.mock("./api/organizations", () => organizationsApi);
+vi.mock("./api/setup", () => setupApi);
 
 describe("App", () => {
   beforeEach(() => {
@@ -17,7 +17,14 @@ describe("App", () => {
   });
 
   it("routes unauthenticated users from home to login when setup is complete", async () => {
-    organizationsApi.hasOrganizations.mockResolvedValue(true);
+    setupApi.getSetupStatus.mockResolvedValue({
+      isConfigured: true,
+      databaseConfigured: true,
+      databaseReachable: true,
+      twilioConfigured: true,
+      jwtConfigured: true,
+      hasOrganizations: true,
+    });
 
     render(
       <MemoryRouter initialEntries={["/"]}>
