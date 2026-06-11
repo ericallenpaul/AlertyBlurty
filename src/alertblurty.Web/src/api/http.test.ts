@@ -25,4 +25,27 @@ describe("http client", () => {
       AxiosHeaders.from(response.config.headers).get("Authorization"),
     ).toBe("Bearer abc123");
   });
+
+  it("clears the stored token when the API rejects it", async () => {
+    window.localStorage.setItem("authToken", "stale-token");
+
+    await expect(
+      http.get("/probe", {
+        adapter: async (config) =>
+          Promise.reject({
+            config,
+            isAxiosError: true,
+            response: {
+              config,
+              data: null,
+              headers: {},
+              status: 401,
+              statusText: "Unauthorized",
+            },
+          }),
+      }),
+    ).rejects.toMatchObject({ response: { status: 401 } });
+
+    expect(window.localStorage.getItem("authToken")).toBeNull();
+  });
 });
