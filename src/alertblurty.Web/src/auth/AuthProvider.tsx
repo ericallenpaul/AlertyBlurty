@@ -1,5 +1,4 @@
 import {
-  createContext,
   useCallback,
   useContext,
   useEffect,
@@ -12,25 +11,14 @@ import {
   login as loginRequest,
   register as registerRequest,
 } from "../api/auth";
+import type { LoginRequest, RegisterRequest } from "../types/api";
+import { AuthContext, type AuthContextValue } from "./AuthContext";
 import { clearToken, getToken, setToken } from "./tokenStore";
-import { decodeAuthToken, type AuthClaims } from "./jwt";
-import type { AuthResponse, LoginRequest, RegisterRequest } from "../types/api";
+import { decodeAuthToken } from "./jwt";
 
 type AuthProviderProps = {
   children: ReactNode;
 };
-
-type AuthContextValue = {
-  token: string | null;
-  claims: AuthClaims | null;
-  isAuthenticated: boolean;
-  login: (request: LoginRequest) => Promise<AuthResponse | null>;
-  register: (request: RegisterRequest) => Promise<AuthResponse | null>;
-  logout: () => void;
-  refreshFromToken: (token: string | null) => AuthClaims | null;
-};
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [authState, setAuthState] = useState(() => {

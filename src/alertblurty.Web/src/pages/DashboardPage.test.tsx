@@ -11,6 +11,13 @@ const incidentsApi = vi.hoisted(() => ({
 
 vi.mock("../api/incidents", () => incidentsApi);
 
+const schedulesApi = vi.hoisted(() => ({
+  getActiveSchedules: vi.fn(),
+  getScheduleShifts: vi.fn(),
+}));
+
+vi.mock("../api/schedules", () => schedulesApi);
+
 function incident(id: string, status: IncidentStatus): IncidentDto {
   return {
     id,
@@ -33,6 +40,8 @@ function incident(id: string, status: IncidentStatus): IncidentDto {
 describe("DashboardPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    schedulesApi.getActiveSchedules.mockResolvedValue([]);
+    schedulesApi.getScheduleShifts.mockResolvedValue([]);
   });
 
   it("summarizes the open incidents returned by the open endpoint", async () => {
@@ -52,5 +61,57 @@ describe("DashboardPage", () => {
     expect(screen.getByTestId("acknowledged-count")).toHaveTextContent("0");
     expect(screen.getByTestId("my-teams-count")).toHaveTextContent("0");
     expect(screen.getByTestId("resolved-today-count")).toHaveTextContent("0");
+  });
+
+  it("surfaces current and on-deck members for active schedules", async () => {
+    incidentsApi.getOpenIncidents.mockResolvedValue([]);
+    schedulesApi.getActiveSchedules.mockResolvedValue([
+      {
+        id: "schedule-id",
+        createdAtUtc: "2026-06-11T00:00:00Z",
+        teamId: "team-id",
+        name: "Primary",
+        frequency: 1,
+        startTimeUtc: "2026-06-11T00:00:00Z",
+        durationMinutes: 1440,
+        isActive: true,
+        teamName: "Platform",
+      },
+    ]);
+    schedulesApi.getScheduleShifts.mockResolvedValue([
+      {
+        id: "current-shift",
+        createdAtUtc: "2026-06-11T00:00:00Z",
+        scheduleId: "schedule-id",
+        userId: "user-one",
+        startTimeUtc: "2026-06-11T00:00:00Z",
+        endTimeUtc: "2099-06-12T00:00:00Z",
+        isSwapped: false,
+        hasPendingSwapRequest: false,
+        userFullName: "Member One",
+      },
+      {
+        id: "next-shift",
+        createdAtUtc: "2026-06-11T00:00:00Z",
+        scheduleId: "schedule-id",
+        userId: "user-two",
+        startTimeUtc: "2099-06-12T00:00:00Z",
+        endTimeUtc: "2099-06-13T00:00:00Z",
+        isSwapped: false,
+        hasPendingSwapRequest: false,
+        userFullName: "Member Two",
+      },
+    ]);
+
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("On-Call Coverage")).toBeVisible();
+    expect(screen.getByText("Platform / Primary")).toBeVisible();
+    expect(screen.getByText("Member One")).toBeVisible();
+    expect(screen.getByText("Member Two")).toBeVisible();
   });
 });

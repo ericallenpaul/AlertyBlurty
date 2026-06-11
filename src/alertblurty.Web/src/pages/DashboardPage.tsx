@@ -2,14 +2,21 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { getOpenIncidents } from "../api/incidents";
+import { getActiveSchedules, getScheduleShifts } from "../api/schedules";
 import { ErrorAlert } from "../components/ErrorAlert";
 import { LoadingState } from "../components/LoadingState";
 import { SeverityBadge, StatusBadge } from "../components/Badges";
-import { IncidentStatus, type IncidentDto } from "../types/api";
+import {
+  IncidentStatus,
+  type IncidentDto,
+  type OnCallScheduleDto,
+  type OnCallShiftDto,
+} from "../types/api";
 import { errorMessage, formatDate } from "./pageUtils";
 
 export function DashboardPage() {
   const [incidents, setIncidents] = useState<IncidentDto[]>([]);
+  const [coverage, setCoverage] = useState<CoverageRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +24,12 @@ export function DashboardPage() {
     async function loadDashboard() {
       try {
         setError(null);
-        setIncidents(await getOpenIncidents());
+        const [loadedIncidents, loadedCoverage] = await Promise.all([
+          getOpenIncidents(),
+          loadCoverage(),
+        ]);
+        setIncidents(loadedIncidents);
+        setCoverage(loadedCoverage);
       } catch (loadError) {
         setError(errorMessage(loadError, "Failed to load dashboard"));
       } finally {
@@ -138,6 +150,42 @@ export function DashboardPage() {
       </div>
 
       <div className="card shadow mt-4">
+        <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h2 className="h5 mb-0">On-Call Coverage</h2>
+          <Link className="btn btn-light btn-sm" to="/on-call-calendar">
+            View Calendar
+          </Link>
+        </div>
+        <div className="card-body">
+          {coverage.length === 0 ? (
+            <p className="text-muted mb-0">No active on-call schedules.</p>
+          ) : (
+            <div className="row g-3">
+              {coverage.map((row) => (
+                <div className="col-md-6 col-xl-4" key={row.schedule.id}>
+                  <div className="border rounded p-3 h-100 bg-white">
+                    <h3 className="h6 mb-3">
+                      {row.schedule.teamName ?? "Team"} / {row.schedule.name}
+                    </h3>
+                    <dl className="mb-0">
+                      <dt className="text-muted small">Current</dt>
+                      <dd className="fw-semibold">
+                        {row.current?.userFullName ?? "Unassigned"}
+                      </dd>
+                      <dt className="text-muted small">On deck</dt>
+                      <dd className="mb-0 fw-semibold">
+                        {row.next?.userFullName ?? "Unassigned"}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="card shadow mt-4">
         <div className="card-header bg-primary text-white">
           <h2 className="h5 mb-0">Recent Activity</h2>
         </div>
@@ -169,6 +217,31 @@ export function DashboardPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+type CoverageRow = {
+  schedule: OnCallScheduleDto;
+  current?: OnCallShiftDto;
+  next?: OnCallShiftDto;
+};
+
+async function loadCoverage(): Promise<CoverageRow[]> {
+  const schedules = await getActiveSchedules();
+  const now = new Date();
+
+  return Promise.all(
+    schedules.map(async (schedule) => {
+      const shifts = await getScheduleShifts(schedule.id);
+      const current = shifts.find((shift) => {
+        const start = new Date(shift.startTimeUtc);
+        const end = new Date(shift.endTimeUtc);
+        return start <= now && end > now;
+      });
+      const next = shifts.find((shift) => new Date(shift.startTimeUtc) > now);
+
+      return { schedule, current, next };
+    }),
   );
 }
 

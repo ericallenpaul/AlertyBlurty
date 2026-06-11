@@ -36,6 +36,12 @@ function toInputDateTime(value: Date) {
   return value.toISOString().slice(0, 16);
 }
 
+function addDays(value: Date, days: number) {
+  const next = new Date(value);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
@@ -62,9 +68,19 @@ export function TeamSchedulePanel({
   const [shifts, setShifts] = useState<OnCallShiftDto[]>([]);
   const [swapRequests, setSwapRequests] = useState<ShiftSwapRequestDto[]>([]);
   const [scheduleName, setScheduleName] = useState("");
-  const [startTime, setStartTime] = useState(() => toInputDateTime(new Date()));
+  const [startTime, setStartTime] = useState(() => {
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+    return toInputDateTime(now);
+  });
+  const [endTime, setEndTime] = useState(() => {
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+    return toInputDateTime(addDays(now, 8));
+  });
   const [swapTargets, setSwapTargets] = useState<Record<string, string>>({});
   const [selectedShiftId, setSelectedShiftId] = useState("");
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -172,8 +188,11 @@ export function TeamSchedulePanel({
         startTimeUtc: new Date(startTime).toISOString(),
         durationMinutes: 1440,
       });
-      await generateScheduleShifts(schedule.id, { count: 8 });
+      await generateScheduleShifts(schedule.id, {
+        endTimeUtc: new Date(endTime).toISOString(),
+      });
       setScheduleName("");
+      setShowCreateWizard(false);
       setSelectedScheduleId(schedule.id);
       setSuccess("Schedule created and shifts generated.");
       await loadAll();
@@ -277,14 +296,25 @@ export function TeamSchedulePanel({
     <div className="card shadow mt-4">
       <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h2 className="h5 mb-0">Schedule</h2>
-        {canManage && selectedScheduleId ? (
-          <button
-            className="btn btn-light btn-sm"
-            onClick={() => void handleGenerateShifts()}
-            type="button"
-          >
-            Generate Shifts
-          </button>
+        {canManage ? (
+          <div className="d-flex gap-2">
+            <button
+              className="btn btn-light btn-sm"
+              onClick={() => setShowCreateWizard(true)}
+              type="button"
+            >
+              Create Schedule
+            </button>
+            {selectedScheduleId ? (
+              <button
+                className="btn btn-outline-light btn-sm"
+                onClick={() => void handleGenerateShifts()}
+                type="button"
+              >
+                Update Future Schedule
+              </button>
+            ) : null}
+          </div>
         ) : null}
       </div>
       <div className="card-body">
@@ -294,43 +324,6 @@ export function TeamSchedulePanel({
           <div className="alert alert-success" role="status">
             {success}
           </div>
-        ) : null}
-
-        {canManage ? (
-          <form
-            className="row g-2 align-items-end mb-4"
-            onSubmit={handleCreateSchedule}
-          >
-            <div className="col-md-5">
-              <label className="form-label" htmlFor="scheduleName">
-                Schedule name
-              </label>
-              <input
-                className="form-control"
-                id="scheduleName"
-                onChange={(event) => setScheduleName(event.target.value)}
-                required
-                value={scheduleName}
-              />
-            </div>
-            <div className="col-md-4">
-              <label className="form-label" htmlFor="scheduleStart">
-                Start time
-              </label>
-              <input
-                className="form-control"
-                id="scheduleStart"
-                onChange={(event) => setStartTime(event.target.value)}
-                type="datetime-local"
-                value={startTime}
-              />
-            </div>
-            <div className="col-md-3">
-              <button className="btn btn-primary w-100" type="submit">
-                Create Schedule
-              </button>
-            </div>
-          </form>
         ) : null}
 
         {schedules.length > 1 ? (
@@ -480,6 +473,79 @@ export function TeamSchedulePanel({
           </div>
         ) : null}
       </div>
+      {showCreateWizard ? (
+        <div
+          aria-labelledby="create-schedule-dialog-title"
+          aria-modal="true"
+          className="modal show d-block"
+          role="dialog"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          tabIndex={-1}
+        >
+          <div className="modal-dialog">
+            <form className="modal-content" onSubmit={handleCreateSchedule}>
+              <div className="modal-header bg-primary text-white">
+                <h2
+                  className="h5 modal-title"
+                  id="create-schedule-dialog-title"
+                >
+                  Create Schedule
+                </h2>
+                <button
+                  aria-label="Close create schedule dialog"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowCreateWizard(false)}
+                  type="button"
+                />
+              </div>
+              <div className="modal-body">
+                <label className="form-label" htmlFor="scheduleName">
+                  Schedule name
+                </label>
+                <input
+                  className="form-control mb-3"
+                  id="scheduleName"
+                  onChange={(event) => setScheduleName(event.target.value)}
+                  required
+                  value={scheduleName}
+                />
+                <label className="form-label" htmlFor="scheduleStart">
+                  Start time
+                </label>
+                <input
+                  className="form-control mb-3"
+                  id="scheduleStart"
+                  onChange={(event) => setStartTime(event.target.value)}
+                  type="datetime-local"
+                  value={startTime}
+                />
+                <label className="form-label" htmlFor="scheduleEnd">
+                  End time
+                </label>
+                <input
+                  className="form-control"
+                  id="scheduleEnd"
+                  onChange={(event) => setEndTime(event.target.value)}
+                  type="datetime-local"
+                  value={endTime}
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowCreateWizard(false)}
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button className="btn btn-primary" type="submit">
+                  Create On-Call Schedule
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

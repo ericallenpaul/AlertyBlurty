@@ -58,4 +58,12 @@ describe("NavMenu", () => {
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(nav).not.toHaveClass("show");
   });
+
+  it("includes an on-call calendar tab", () => {
+    renderNavMenu();
+
+    expect(
+      screen.getByRole("link", { name: "On-Call Calendar" }),
+    ).toHaveAttribute("href", "/on-call-calendar");
+  });
 });

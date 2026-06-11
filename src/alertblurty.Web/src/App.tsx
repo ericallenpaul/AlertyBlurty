@@ -10,6 +10,7 @@ import { IncidentDetailsPage } from "./pages/IncidentDetailsPage";
 import { IncidentsPage } from "./pages/IncidentsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { LogoutPage } from "./pages/LogoutPage";
+import { OnCallCalendarPage } from "./pages/OnCallCalendarPage";
 import { SetupPage } from "./pages/SetupPage";
 import { TeamDetailsPage } from "./pages/TeamDetailsPage";
 import { TeamsPage } from "./pages/TeamsPage";
@@ -45,6 +46,10 @@ export function App() {
           element={protectedElement(<IncidentDetailsPage />)}
         />
         <Route path="/teams" element={protectedElement(<TeamsPage />)} />
+        <Route
+          path="/on-call-calendar"
+          element={protectedElement(<OnCallCalendarPage />)}
+        />
         <Route
           path="/teams/:id"
           element={protectedElement(<TeamDetailsPage />)}
