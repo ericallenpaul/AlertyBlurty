@@ -39,24 +39,52 @@ describe("NavMenu", () => {
     window.localStorage.clear();
   });
 
-  it("toggles the mobile collapse and closes it after selecting a link", async () => {
+  it("collapses and expands the sidebar", async () => {
     renderNavMenu();
     const user = userEvent.setup();
-    const toggle = screen.getByRole("button", { name: "Toggle navigation" });
-    const nav = screen.getByRole("navigation").querySelector("#main-nav");
+    const toggle = screen.getByRole("button", { name: "Collapse navigation" });
+    const nav = screen.getByRole("navigation");
 
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(nav).not.toHaveClass("show");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(nav).toHaveClass("app-sidebar-expanded");
 
     await user.click(toggle);
 
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(nav).toHaveClass("show");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(nav).toHaveClass("app-sidebar-collapsed");
+
+    await user.click(screen.getByRole("button", { name: "Expand navigation" }));
+
+    expect(nav).toHaveClass("app-sidebar-expanded");
+  });
+
+  it("pins the sidebar preference", async () => {
+    renderNavMenu();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Unpin navigation" }));
+
+    expect(window.localStorage.getItem("sidebarPinned")).toBe("false");
+    expect(
+      screen.getByRole("button", { name: "Pin navigation" }),
+    ).toBeVisible();
+  });
+
+  it("opens and closes the mobile sidebar", async () => {
+    renderNavMenu();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Open navigation" }));
+
+    expect(screen.getByRole("navigation")).toHaveClass(
+      "app-sidebar-mobile-open",
+    );
 
     await user.click(screen.getByRole("link", { name: "Incidents" }));
 
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(nav).not.toHaveClass("show");
+    expect(screen.getByRole("navigation")).not.toHaveClass(
+      "app-sidebar-mobile-open",
+    );
   });
 
   it("includes an on-call calendar tab", () => {
