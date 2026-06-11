@@ -201,12 +201,17 @@ async function loginWithToken(page: Page, token: string) {
 async function createScheduleFromUi(page: Page, team: TeamContext) {
   await page.goto(`/teams/${team.id}`);
   await expect(page.getByRole("heading", { name: team.name })).toBeVisible();
-  await page.getByLabel("Schedule name").fill("Primary");
   await page.getByRole("button", { name: "Create Schedule" }).click();
+  await page.getByLabel("Schedule name").fill("Primary");
+  await page.getByLabel("End time").fill("2026-06-19T00:00");
+  await page.getByRole("button", { name: "Create On-Call Schedule" }).click();
   await expect(
     page.getByText("Schedule created and shifts generated."),
   ).toBeVisible();
   await expect(page.getByText("Schedule Member 1").first()).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "On-Call Calendar" }),
+  ).toBeVisible();
 }
 
 async function requestSwapFromUi(

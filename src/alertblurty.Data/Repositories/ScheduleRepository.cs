@@ -96,14 +96,37 @@ public class ScheduleRepository : IScheduleRepository
             throw new ArgumentOutOfRangeException(nameof(count), "Shift count must be greater than zero.");
         }
 
-        var schedule = await _context.OnCallSchedules
+        var schedule = await LoadScheduleForGenerationAsync(scheduleId, cancellationToken);
+
+        return await ReplaceScheduleShiftsAsync(schedule, count, cancellationToken);
+    }
+
+    public async Task<List<OnCallShiftDto>> GenerateShiftsUntilAsync(Guid scheduleId, DateTime endTimeUtc, CancellationToken cancellationToken = default)
+    {
+        var schedule = await LoadScheduleForGenerationAsync(scheduleId, cancellationToken);
+
+        if (endTimeUtc <= schedule.StartTimeUtc)
+        {
+            throw new ArgumentOutOfRangeException(nameof(endTimeUtc), "End time must be after the schedule start time.");
+        }
+
+        var count = CountPeriodsUntil(schedule.StartTimeUtc, schedule.Frequency, schedule.DurationMinutes, endTimeUtc);
+        return await ReplaceScheduleShiftsAsync(schedule, count, cancellationToken);
+    }
+
+    private async Task<OnCallSchedule> LoadScheduleForGenerationAsync(Guid scheduleId, CancellationToken cancellationToken)
+    {
+        return await _context.OnCallSchedules
             .Include(entity => entity.Team)
             .ThenInclude(team => team.Members)
             .ThenInclude(member => member.User)
             .Include(entity => entity.Shifts)
             .FirstOrDefaultAsync(entity => entity.Id == scheduleId, cancellationToken)
             ?? throw new KeyNotFoundException($"Schedule with ID {scheduleId} not found");
+    }
 
+    private async Task<List<OnCallShiftDto>> ReplaceScheduleShiftsAsync(OnCallSchedule schedule, int count, CancellationToken cancellationToken)
+    {
         var members = schedule.Team.Members
             .Where(member => member.IsActive)
             .OrderBy(member => member.RotationOrder)
@@ -408,5 +431,16 @@ public class ScheduleRepository : IScheduleRepository
             Entities.ScheduleFrequency.Monthly => start.AddMonths(index),
             _ => start.AddMinutes(durationMinutes * index)
         };
+    }
+
+    private static int CountPeriodsUntil(DateTime start, Entities.ScheduleFrequency frequency, int durationMinutes, DateTime end)
+    {
+        var count = 0;
+        while (AddPeriods(start, frequency, count, durationMinutes) < end)
+        {
+            count++;
+        }
+
+        return count;
     }
 }

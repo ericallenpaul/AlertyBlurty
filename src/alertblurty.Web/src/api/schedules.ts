@@ -18,6 +18,11 @@ export async function getTeamSchedules(
   return response.data;
 }
 
+export async function getActiveSchedules(): Promise<OnCallScheduleDto[]> {
+  const response = await http.get<OnCallScheduleDto[]>("/api/schedules/active");
+  return response.data;
+}
+
 export async function createSchedule(
   request: CreateScheduleRequest,
 ): Promise<OnCallScheduleDto> {

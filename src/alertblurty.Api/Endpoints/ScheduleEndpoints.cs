@@ -24,6 +24,15 @@ public static class ScheduleEndpoints
         })
         .WithName("GetSchedulesByTeam");
 
+        schedules.MapGet("/active", async (
+            [FromServices] IScheduleRepository scheduleRepository,
+            CancellationToken cancellationToken) =>
+        {
+            var activeSchedules = await scheduleRepository.GetActiveSchedulesAsync(cancellationToken);
+            return Results.Ok(activeSchedules);
+        })
+        .WithName("GetActiveSchedules");
+
         schedules.MapPost("/", async (
             [FromBody] CreateScheduleRequest request,
             [FromServices] IScheduleRepository scheduleRepository,
@@ -65,9 +74,16 @@ public static class ScheduleEndpoints
             [FromServices] IScheduleRepository scheduleRepository,
             CancellationToken cancellationToken) =>
         {
+            if (request.Count is null && request.EndTimeUtc is null)
+            {
+                return Results.BadRequest(new { error = "Either count or endTimeUtc is required." });
+            }
+
             try
             {
-                var shifts = await scheduleRepository.GenerateShiftsAsync(scheduleId, request.Count, cancellationToken);
+                var shifts = request.EndTimeUtc is not null
+                    ? await scheduleRepository.GenerateShiftsUntilAsync(scheduleId, request.EndTimeUtc.Value, cancellationToken)
+                    : await scheduleRepository.GenerateShiftsAsync(scheduleId, request.Count!.Value, cancellationToken);
                 return Results.Ok(shifts);
             }
             catch (Exception error) when (error is ArgumentOutOfRangeException or InvalidOperationException or KeyNotFoundException)

@@ -77,6 +77,15 @@ export function NavMenu() {
               <NavLink
                 className={navLinkClass}
                 onClick={() => setIsOpen(false)}
+                to="/on-call-calendar"
+              >
+                On-Call Calendar
+              </NavLink>
+            </li>
+            <li className="nav-item">
+              <NavLink
+                className={navLinkClass}
+                onClick={() => setIsOpen(false)}
                 to="/user-info"
               >
                 User Info

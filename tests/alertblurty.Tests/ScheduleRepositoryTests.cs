@@ -32,6 +32,22 @@ public class ScheduleRepositoryTests
     }
 
     [Fact]
+    public async Task GenerateShiftsUntilAsync_Creates_shifts_through_requested_end_time()
+    {
+        await using var context = CreateContext();
+        var (_, _, _, schedule) = await SeedTeamScheduleAsync(context, requireApproval: false);
+        var repository = new ScheduleRepository(context);
+
+        var shifts = await repository.GenerateShiftsUntilAsync(
+            schedule.Id,
+            new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc),
+            CancellationToken.None);
+
+        shifts.Should().HaveCount(4);
+        shifts.Last().EndTimeUtc.Should().Be(new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc));
+    }
+
+    [Fact]
     public async Task CreateSwapRequestAsync_Applies_immediately_when_team_does_not_require_approval()
     {
         await using var context = CreateContext();

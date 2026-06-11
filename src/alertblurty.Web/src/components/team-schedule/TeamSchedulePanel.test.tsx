@@ -101,7 +101,7 @@ describe("TeamSchedulePanel", () => {
     );
   });
 
-  it("lets admins create a schedule and generate shifts", async () => {
+  it("lets admins create a schedule for a selected time period", async () => {
     schedulesApi.getTeamSchedules.mockResolvedValueOnce([]);
     schedulesApi.createSchedule.mockResolvedValue({
       id: "schedule-id",
@@ -124,12 +124,19 @@ describe("TeamSchedulePanel", () => {
       />,
     );
 
-    await userEvent.type(
-      await screen.findByLabelText("Schedule name"),
-      "Primary",
-    );
     await userEvent.click(
-      screen.getByRole("button", { name: "Create Schedule" }),
+      await screen.findByRole("button", { name: "Create Schedule" }),
+    );
+    await userEvent.type(screen.getByLabelText("Schedule name"), "Primary");
+    await userEvent.clear(screen.getByLabelText("Start time"));
+    await userEvent.type(
+      screen.getByLabelText("Start time"),
+      "2026-06-11T00:00",
+    );
+    await userEvent.clear(screen.getByLabelText("End time"));
+    await userEvent.type(screen.getByLabelText("End time"), "2026-06-18T00:00");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Create On-Call Schedule" }),
     );
 
     await waitFor(() =>
@@ -143,7 +150,29 @@ describe("TeamSchedulePanel", () => {
     );
     expect(schedulesApi.generateScheduleShifts).toHaveBeenCalledWith(
       "schedule-id",
-      { count: 8 },
+      { endTimeUtc: "2026-06-18T04:00:00.000Z" },
+    );
+  });
+
+  it("lets admins refresh future shifts after roster changes", async () => {
+    render(
+      <TeamSchedulePanel
+        canManage
+        currentUserId="admin-id"
+        members={members}
+        teamId="team-id"
+      />,
+    );
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Update Future Schedule" }),
+    );
+
+    await waitFor(() =>
+      expect(schedulesApi.generateScheduleShifts).toHaveBeenCalledWith(
+        "schedule-id",
+        { count: 8 },
+      ),
     );
   });
 

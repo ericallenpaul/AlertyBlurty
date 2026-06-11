@@ -157,7 +157,8 @@ export interface CreateScheduleRequest {
 }
 
 export interface GenerateShiftsRequest {
-  count: number;
+  count?: number;
+  endTimeUtc?: string;
 }
 
 export interface OnCallShiftDto extends BaseDto {

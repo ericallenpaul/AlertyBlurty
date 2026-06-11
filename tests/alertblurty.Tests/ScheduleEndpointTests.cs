@@ -78,6 +78,25 @@ public class ScheduleEndpointTests
         approvedShifts.Single().ApprovedByUserId.Should().NotBeNull();
     }
 
+    [Fact]
+    public async Task GenerateShifts_Allows_admin_to_generate_for_date_range()
+    {
+        Environment.SetEnvironmentVariable("JWT_SECRET", "test-secret-with-enough-length-for-hmac-signing");
+
+        await using var factory = new AlertBlurtyApiFactory();
+        using var client = factory.CreateClient();
+        var context = await SeedScheduleWorkflowAsync(client, requireApproval: false);
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", context.AdminToken);
+        var generateResponse = await client.PostAsJsonAsync(
+            $"/api/schedules/{context.Schedule.Id}/generate-shifts",
+            new GenerateShiftsRequest { EndTimeUtc = new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc) });
+
+        var shifts = await ReadSuccessfulJsonAsync<List<OnCallShiftDto>>(generateResponse);
+        shifts.Should().HaveCount(4);
+        shifts.Last().EndTimeUtc.Should().Be(new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc));
+    }
+
     private static async Task<ScheduleWorkflowContext> SeedScheduleWorkflowAsync(HttpClient client, bool requireApproval)
     {
         var uniqueId = Guid.NewGuid().ToString("N");
