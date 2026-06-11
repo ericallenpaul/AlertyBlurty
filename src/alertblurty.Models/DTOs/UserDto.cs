@@ -17,6 +17,5 @@ public class UserDto : BaseDto
 public enum UserRole
 {
     User = 0,
-    Admin = 1,
-    SuperAdmin = 2
+    Admin = 1
 }

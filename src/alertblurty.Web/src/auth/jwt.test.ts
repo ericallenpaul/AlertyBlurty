@@ -35,7 +35,7 @@ describe("decodeAuthToken", () => {
         "user-id",
       "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress":
         "user@example.com",
-      "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": 2,
+      "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": 1,
       org: "organization-id",
       exp: Math.floor(Date.now() / 1000) + 60,
     });
@@ -43,7 +43,7 @@ describe("decodeAuthToken", () => {
     expect(decodeAuthToken(token)).toMatchObject({
       userId: "user-id",
       email: "user@example.com",
-      role: UserRole.SuperAdmin,
+      role: UserRole.Admin,
       organizationId: "organization-id",
     });
   });

@@ -70,8 +70,6 @@ function statusBadgeClass(status: IncidentStatus) {
 
 function roleBadgeClass(role: UserRole) {
   switch (role) {
-    case UserRole.SuperAdmin:
-      return "badge-alerty-red";
     case UserRole.Admin:
       return "badge-alerty";
     case UserRole.User:
@@ -83,8 +81,6 @@ function roleBadgeClass(role: UserRole) {
 
 function roleText(role: UserRole) {
   switch (role) {
-    case UserRole.SuperAdmin:
-      return "SuperAdmin";
     case UserRole.Admin:
       return "Admin";
     case UserRole.User:

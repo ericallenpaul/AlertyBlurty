@@ -97,7 +97,7 @@ public static class UserEndpoints
             return Results.Created($"/api/users/{createdUser.Id}", createdUser);
         })
         .WithName("CreateUser")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         group.MapPut("/{id:guid}", async (
             [FromRoute] Guid id,
@@ -121,7 +121,7 @@ public static class UserEndpoints
             return Results.Ok(updatedUser);
         })
         .WithName("UpdateUser")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         group.MapDelete("/{id:guid}", async (
             [FromRoute] Guid id,
@@ -132,6 +132,6 @@ public static class UserEndpoints
             return Results.NoContent();
         })
         .WithName("DeleteUser")
-        .RequireAuthorization(policy => policy.RequireRole("SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
     }
 }

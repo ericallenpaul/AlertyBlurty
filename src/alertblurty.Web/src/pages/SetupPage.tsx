@@ -387,7 +387,7 @@ export function SetupPage() {
                 <form onSubmit={handleCompleteSetup}>
                   <h1 className="h4">Create Administrator Account</h1>
                   <p className="text-muted">
-                    This will be the first SuperAdmin user.
+                    This will be the first Admin user.
                   </p>
                   <div className="row">
                     <Field

@@ -52,24 +52,15 @@ export function App() {
         <Route path="/user-info" element={protectedElement(<UserInfoPage />)} />
         <Route
           path="/users"
-          element={protectedElement(<UsersPage />, [
-            UserRole.Admin,
-            UserRole.SuperAdmin,
-          ])}
+          element={protectedElement(<UsersPage />, [UserRole.Admin])}
         />
         <Route
           path="/users/create"
-          element={protectedElement(<CreateUserPage />, [
-            UserRole.Admin,
-            UserRole.SuperAdmin,
-          ])}
+          element={protectedElement(<CreateUserPage />, [UserRole.Admin])}
         />
         <Route
           path="/users/:id"
-          element={protectedElement(<UserDetailsPage />, [
-            UserRole.Admin,
-            UserRole.SuperAdmin,
-          ])}
+          element={protectedElement(<UserDetailsPage />, [UserRole.Admin])}
         />
       </Route>
     </Routes>
