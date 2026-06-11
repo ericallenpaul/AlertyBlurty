@@ -147,6 +147,7 @@ app.MapAuthEndpoints();
 app.MapOrganizationEndpoints();
 app.MapUserEndpoints();
 app.MapTeamEndpoints();
+app.MapScheduleEndpoints();
 app.MapIncidentEndpoints();
 app.MapWebhookEndpoints();
 

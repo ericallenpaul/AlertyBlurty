@@ -11,6 +11,7 @@ import {
 import { useAuth } from "../auth/AuthProvider";
 import { ErrorAlert } from "../components/ErrorAlert";
 import { LoadingState } from "../components/LoadingState";
+import { TeamSchedulePanel } from "../components/team-schedule/TeamSchedulePanel";
 import {
   UserRole,
   type TeamDto,
@@ -220,6 +221,12 @@ export function TeamDetailsPage() {
               )}
             </div>
           </div>
+          <TeamSchedulePanel
+            canManage={mayManage}
+            currentUserId={claims?.userId}
+            members={members}
+            teamId={team.id}
+          />
         </div>
         <div className="col-lg-4">
           <div className="card shadow">

@@ -10,6 +10,20 @@ export enum IncidentStatus {
   Resolved = 2,
 }
 
+export enum ScheduleFrequency {
+  Hourly = 0,
+  Daily = 1,
+  Weekly = 2,
+  Monthly = 3,
+}
+
+export enum ShiftSwapRequestStatus {
+  Pending = 0,
+  Approved = 1,
+  Rejected = 2,
+  Applied = 3,
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -123,6 +137,75 @@ export interface TeamMemberDto extends BaseDto {
 export interface AddTeamMemberRequest {
   userId: string;
   rotationOrder: number;
+}
+
+export interface OnCallScheduleDto extends BaseDto {
+  teamId: string;
+  name: string;
+  frequency: ScheduleFrequency;
+  startTimeUtc: string;
+  durationMinutes: number;
+  isActive: boolean;
+  teamName?: string;
+}
+
+export interface CreateScheduleRequest {
+  teamId: string;
+  name: string;
+  frequency: ScheduleFrequency;
+  startTimeUtc: string;
+  durationMinutes: number;
+}
+
+export interface GenerateShiftsRequest {
+  count: number;
+}
+
+export interface OnCallShiftDto extends BaseDto {
+  scheduleId: string;
+  userId: string;
+  startTimeUtc: string;
+  endTimeUtc: string;
+  isSwapped: boolean;
+  swappedWithUserId?: string;
+  approvedByUserId?: string;
+  hasPendingSwapRequest: boolean;
+  pendingSwapRequestId?: string;
+  pendingSwapTargetUserId?: string;
+  userFullName?: string;
+  swappedWithUserFullName?: string;
+  approvedByUserFullName?: string;
+  pendingSwapTargetUserFullName?: string;
+  scheduleName?: string;
+}
+
+export interface CreateSwapRequest {
+  targetUserId: string;
+  requesterNote: string;
+}
+
+export interface DecideSwapRequest {
+  decisionNote: string;
+}
+
+export interface ShiftSwapRequestDto extends BaseDto {
+  shiftId: string;
+  scheduleId: string;
+  teamId: string;
+  requestedByUserId: string;
+  targetUserId: string;
+  status: ShiftSwapRequestStatus;
+  requiresApprovalSnapshot: boolean;
+  requestedAtUtc: string;
+  decidedAtUtc?: string;
+  decidedByUserId?: string;
+  requesterNote: string;
+  decisionNote: string;
+  requestedByUserFullName?: string;
+  targetUserFullName?: string;
+  decidedByUserFullName?: string;
+  shiftStartTimeUtc: string;
+  shiftEndTimeUtc: string;
 }
 
 export interface CreateUserRequest {
