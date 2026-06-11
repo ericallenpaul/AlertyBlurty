@@ -92,6 +92,7 @@ a:hover,
 .app-icon-button {
     align-items: center;
     display: inline-flex;
+    font-size: 1.1rem;
     height: 2.5rem;
     justify-content: center;
     line-height: 1;
@@ -132,12 +133,37 @@ a:hover,
     color: white;
 }
 
-.app-sidebar-initial {
+.app-sidebar-icon {
     align-items: center;
+    background: rgba(255, 248, 232, 0.08);
+    border: 1px solid rgba(255, 248, 232, 0.12);
+    border-radius: 6px;
     display: inline-flex;
-    flex: 0 0 1.25rem;
-    font-weight: 700;
+    flex: 0 0 2rem;
+    font-size: 1rem;
+    height: 2rem;
     justify-content: center;
+    transition:
+        background-color 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease;
+}
+
+.app-sidebar-link:hover .app-sidebar-icon,
+.app-sidebar-link:focus .app-sidebar-icon {
+    background: rgba(255, 209, 45, 0.18);
+    border-color: rgba(255, 209, 45, 0.34);
+}
+
+.app-sidebar-link.active .app-sidebar-icon {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.28);
+}
+
+.app-sidebar-collapsed .app-sidebar-link {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 .app-sidebar-collapsed .app-sidebar-label,

@@ -94,4 +94,35 @@ describe("NavMenu", () => {
       screen.getByRole("link", { name: "On-Call Calendar" }),
     ).toHaveAttribute("href", "/on-call-calendar");
   });
+
+  it("uses icon treatments for navigation links and controls", () => {
+    const { container } = renderNavMenu();
+
+    expect(
+      screen
+        .getByRole("link", { name: "Dashboard" })
+        .querySelector(".bi-speedometer2"),
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("link", { name: "Incidents" })
+        .querySelector(".bi-exclamation-triangle"),
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("link", { name: "On-Call Calendar" })
+        .querySelector(".bi-calendar-week"),
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: "Collapse navigation" })
+        .querySelector(".bi-chevron-left"),
+    ).not.toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: "Unpin navigation" })
+        .querySelector(".bi-pin-angle-fill"),
+    ).not.toBeNull();
+    expect(container.querySelector(".app-sidebar-initial")).toBeNull();
+  });
 });
