@@ -13,16 +13,21 @@ const pinStorageKey = "sidebarPinned";
 type NavItem = {
   label: string;
   to: string;
+  icon: string;
   adminOnly?: boolean;
 };
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", to: "/dashboard" },
-  { label: "Incidents", to: "/incidents" },
-  { label: "Teams", to: "/teams" },
-  { label: "On-Call Calendar", to: "/on-call-calendar" },
-  { label: "User Info", to: "/user-info" },
-  { label: "Users", to: "/users", adminOnly: true },
+  { label: "Dashboard", to: "/dashboard", icon: "bi-speedometer2" },
+  { label: "Incidents", to: "/incidents", icon: "bi-exclamation-triangle" },
+  { label: "Teams", to: "/teams", icon: "bi-people" },
+  {
+    label: "On-Call Calendar",
+    to: "/on-call-calendar",
+    icon: "bi-calendar-week",
+  },
+  { label: "User Info", to: "/user-info", icon: "bi-person-circle" },
+  { label: "Users", to: "/users", icon: "bi-person-gear", adminOnly: true },
 ];
 
 export function NavMenu() {
@@ -70,7 +75,7 @@ export function NavMenu() {
           onClick={() => setIsMobileOpen(true)}
           type="button"
         >
-          <span aria-hidden="true">Menu</span>
+          <i aria-hidden="true" className="bi bi-list" />
         </button>
         <img
           alt="AlertyBlurty"
@@ -117,7 +122,10 @@ export function NavMenu() {
             onClick={toggleExpanded}
             type="button"
           >
-            <span aria-hidden="true">{isExpanded ? "<" : ">"}</span>
+            <i
+              aria-hidden="true"
+              className={`bi ${isExpanded ? "bi-chevron-left" : "bi-chevron-right"}`}
+            />
           </button>
           <button
             aria-label={isPinned ? "Unpin navigation" : "Pin navigation"}
@@ -125,7 +133,10 @@ export function NavMenu() {
             onClick={togglePinned}
             type="button"
           >
-            <span aria-hidden="true">{isPinned ? "Pinned" : "Pin"}</span>
+            <i
+              aria-hidden="true"
+              className={`bi ${isPinned ? "bi-pin-angle-fill" : "bi-pin-angle"}`}
+            />
           </button>
         </div>
         <ul className="app-sidebar-list">
@@ -136,8 +147,8 @@ export function NavMenu() {
                 onClick={closeMobileNav}
                 to={item.to}
               >
-                <span className="app-sidebar-initial" aria-hidden="true">
-                  {item.label.slice(0, 1)}
+                <span className="app-sidebar-icon" aria-hidden="true">
+                  <i className={`bi ${item.icon}`} />
                 </span>
                 <span className="app-sidebar-label">{item.label}</span>
               </NavLink>
@@ -145,8 +156,8 @@ export function NavMenu() {
           ))}
         </ul>
         <NavLink className={navLinkClass} onClick={closeMobileNav} to="/logout">
-          <span className="app-sidebar-initial" aria-hidden="true">
-            L
+          <span className="app-sidebar-icon" aria-hidden="true">
+            <i className="bi bi-box-arrow-right" />
           </span>
           <span className="app-sidebar-label">Logout</span>
         </NavLink>
