@@ -25,38 +25,150 @@ a:hover,
     color: var(--alerty-red-dark);
 }
 
-.navbar.bg-dark {
-    background-color: var(--alerty-black) !important;
-    border-bottom: 3px solid var(--alerty-yellow);
+.app-shell {
+    min-height: 100vh;
 }
 
-.navbar-brand {
-    padding-bottom: 0;
-    padding-top: 0;
+.app-main {
+    min-width: 0;
+    padding-left: 16rem;
+    transition: padding-left 160ms ease;
 }
 
-.navbar-logo {
-    height: 54px;
-    width: auto;
+.app-sidebar {
+    background-color: var(--alerty-black);
+    border-right: 3px solid var(--alerty-yellow);
+    bottom: 0;
+    color: var(--alerty-paper);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    left: 0;
+    overflow-x: hidden;
+    padding: 0.75rem;
+    position: fixed;
+    top: 0;
+    transition:
+        transform 160ms ease,
+        width 160ms ease;
+    width: 16rem;
+    z-index: 1030;
 }
 
-.navbar-dark .navbar-nav .nav-link {
+.app-sidebar-collapsed {
+    width: 4.5rem;
+}
+
+.app-sidebar-collapsed ~ .app-main {
+    padding-left: 4.5rem;
+}
+
+.app-sidebar-brand {
+    align-items: center;
+    border-radius: 8px;
+    display: flex;
+    height: 6.5rem;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.app-sidebar-logo {
+    height: 94px;
+    max-width: 14.25rem;
+    object-fit: contain;
+}
+
+.app-sidebar-collapsed .app-sidebar-logo {
+    height: 42px;
+    max-width: 3.25rem;
+}
+
+.app-sidebar-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.app-icon-button {
+    align-items: center;
+    display: inline-flex;
+    height: 2.5rem;
+    justify-content: center;
+    line-height: 1;
+    min-width: 2.5rem;
+    padding: 0;
+}
+
+.app-sidebar-list {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.app-sidebar-link {
+    align-items: center;
     border-radius: 6px;
     color: rgba(255, 248, 232, 0.86);
-    margin: 0 0.125rem;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+    display: flex;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    padding: 0.625rem 0.75rem;
+    text-decoration: none;
+    white-space: nowrap;
 }
 
-.navbar-dark .navbar-nav .nav-link:hover,
-.navbar-dark .navbar-nav .nav-link:focus {
+.app-sidebar-link:hover,
+.app-sidebar-link:focus {
     background-color: rgba(255, 209, 45, 0.12);
     color: white;
 }
 
-.navbar-dark .navbar-nav .nav-link.active {
-    background-color: var(--alerty-red) !important;
+.app-sidebar-link.active {
+    background-color: var(--alerty-red);
     color: white;
+}
+
+.app-sidebar-initial {
+    align-items: center;
+    display: inline-flex;
+    flex: 0 0 1.25rem;
+    font-weight: 700;
+    justify-content: center;
+}
+
+.app-sidebar-collapsed .app-sidebar-label,
+.app-sidebar-collapsed .app-sidebar-controls button:nth-child(2) {
+    display: none;
+}
+
+.app-mobile-bar {
+    align-items: center;
+    background-color: var(--alerty-black);
+    border-bottom: 3px solid var(--alerty-yellow);
+    display: none;
+    gap: 0.75rem;
+    min-height: 4rem;
+    padding: 0.5rem 1rem;
+}
+
+.app-mobile-logo {
+    height: 58px;
+    width: auto;
+}
+
+.app-sidebar-backdrop {
+    background: rgba(0, 0, 0, 0.45);
+    border: 0;
+    bottom: 0;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 1025;
 }
 
 .btn-primary,
@@ -229,6 +341,33 @@ a:hover,
 }
 
 @media (max-width: 991.98px) {
+    .app-main {
+        padding-left: 0;
+    }
+
+    .app-mobile-bar {
+        display: flex;
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+    }
+
+    .app-sidebar,
+    .app-sidebar-collapsed {
+        max-width: 86vw;
+        transform: translateX(-105%);
+        width: 16rem;
+    }
+
+    .app-sidebar-mobile-open {
+        transform: translateX(0);
+    }
+
+    .app-sidebar-collapsed .app-sidebar-label,
+    .app-sidebar-collapsed .app-sidebar-controls button:nth-child(2) {
+        display: inline-flex;
+    }
+
     .team-schedule-grid {
         grid-template-columns: 1fr;
     }

@@ -4,10 +4,12 @@ import { NavMenu } from "./NavMenu";
 
 export function MainLayout() {
   return (
-    <div>
+    <div className="app-shell">
       <NavMenu />
-      <main className="container py-4">
-        <Outlet />
+      <main className="app-main">
+        <div className="container py-4">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
