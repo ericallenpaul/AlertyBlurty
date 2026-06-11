@@ -1,6 +1,6 @@
 import axios, { AxiosHeaders } from "axios";
 
-import { getToken } from "../auth/tokenStore";
+import { clearToken, getToken } from "../auth/tokenStore";
 import { apiBaseUrl } from "../config";
 
 export const http = axios.create({
@@ -20,3 +20,14 @@ http.interceptors.request.use((config) => {
 
   return config;
 });
+
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      clearToken();
+    }
+
+    return Promise.reject(error);
+  },
+);
