@@ -58,16 +58,21 @@ describe("NavMenu", () => {
     expect(nav).toHaveClass("app-sidebar-expanded");
   });
 
-  it("pins the sidebar preference", async () => {
+  it("persists the collapsed sidebar preference without a separate pin control", async () => {
     renderNavMenu();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole("button", { name: "Unpin navigation" }));
+    await user.click(
+      screen.getByRole("button", { name: "Collapse navigation" }),
+    );
 
-    expect(window.localStorage.getItem("sidebarPinned")).toBe("false");
+    expect(window.localStorage.getItem("sidebarExpanded")).toBe("false");
     expect(
-      screen.getByRole("button", { name: "Pin navigation" }),
-    ).toBeVisible();
+      screen.queryByRole("button", { name: /pin navigation/i }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /unpin navigation/i }),
+    ).toBeNull();
   });
 
   it("opens and closes the mobile sidebar", async () => {
@@ -116,12 +121,7 @@ describe("NavMenu", () => {
     expect(
       screen
         .getByRole("button", { name: "Collapse navigation" })
-        .querySelector(".bi-chevron-left"),
-    ).not.toBeNull();
-    expect(
-      screen
-        .getByRole("button", { name: "Unpin navigation" })
-        .querySelector(".bi-pin-angle-fill"),
+        .querySelector(".bi-layout-sidebar-inset"),
     ).not.toBeNull();
     expect(container.querySelector(".app-sidebar-initial")).toBeNull();
   });

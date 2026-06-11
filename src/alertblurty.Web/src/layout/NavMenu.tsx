@@ -8,7 +8,7 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
   return isActive ? "app-sidebar-link active" : "app-sidebar-link";
 }
 
-const pinStorageKey = "sidebarPinned";
+const sidebarExpandedStorageKey = "sidebarExpanded";
 
 type NavItem = {
   label: string;
@@ -33,10 +33,7 @@ const navItems: NavItem[] = [
 export function NavMenu() {
   const { claims, isAuthenticated } = useAuth();
   const [isExpanded, setIsExpanded] = useState(() => {
-    return window.localStorage.getItem(pinStorageKey) !== "false";
-  });
-  const [isPinned, setIsPinned] = useState(() => {
-    return window.localStorage.getItem(pinStorageKey) !== "false";
+    return window.localStorage.getItem(sidebarExpandedStorageKey) !== "false";
   });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const canManage = claims?.role === UserRole.Admin;
@@ -50,16 +47,9 @@ export function NavMenu() {
   }
 
   function toggleExpanded() {
-    setIsExpanded((current) => !current);
-  }
-
-  function togglePinned() {
-    setIsPinned((current) => {
+    setIsExpanded((current) => {
       const next = !current;
-      window.localStorage.setItem(pinStorageKey, String(next));
-      if (next) {
-        setIsExpanded(true);
-      }
+      window.localStorage.setItem(sidebarExpandedStorageKey, String(next));
       return next;
     });
   }
@@ -124,18 +114,9 @@ export function NavMenu() {
           >
             <i
               aria-hidden="true"
-              className={`bi ${isExpanded ? "bi-chevron-left" : "bi-chevron-right"}`}
-            />
-          </button>
-          <button
-            aria-label={isPinned ? "Unpin navigation" : "Pin navigation"}
-            className="btn btn-outline-light app-icon-button"
-            onClick={togglePinned}
-            type="button"
-          >
-            <i
-              aria-hidden="true"
-              className={`bi ${isPinned ? "bi-pin-angle-fill" : "bi-pin-angle"}`}
+              className={`bi ${
+                isExpanded ? "bi-layout-sidebar-inset" : "bi-layout-sidebar"
+              }`}
             />
           </button>
         </div>
