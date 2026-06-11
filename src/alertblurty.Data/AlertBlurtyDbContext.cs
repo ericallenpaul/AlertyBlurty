@@ -16,6 +16,7 @@ public class AlertBlurtyDbContext : DbContext
     public DbSet<TeamMember> TeamMembers { get; set; }
     public DbSet<OnCallSchedule> OnCallSchedules { get; set; }
     public DbSet<OnCallShift> OnCallShifts { get; set; }
+    public DbSet<ShiftSwapRequest> ShiftSwapRequests { get; set; }
     public DbSet<Incident> Incidents { get; set; }
     public DbSet<IncidentNotification> IncidentNotifications { get; set; }
     public DbSet<IncidentAcknowledgment> IncidentAcknowledgments { get; set; }

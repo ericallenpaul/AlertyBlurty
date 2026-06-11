@@ -15,4 +15,5 @@ public class OnCallShift : BaseEntity
     public User User { get; set; } = null!;
     public User? SwappedWithUser { get; set; }
     public User? ApprovedByUser { get; set; }
+    public ICollection<ShiftSwapRequest> SwapRequests { get; set; } = new List<ShiftSwapRequest>();
 }
