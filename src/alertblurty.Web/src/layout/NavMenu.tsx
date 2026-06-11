@@ -11,8 +11,7 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 export function NavMenu() {
   const { claims, isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const canManage =
-    claims?.role === UserRole.Admin || claims?.role === UserRole.SuperAdmin;
+  const canManage = claims?.role === UserRole.Admin;
 
   if (!isAuthenticated) {
     return null;

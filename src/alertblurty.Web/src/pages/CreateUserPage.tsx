@@ -131,9 +131,6 @@ export function CreateUserPage() {
                   >
                     <option value={UserRole.User}>User</option>
                     <option value={UserRole.Admin}>Admin</option>
-                    {claims?.role === UserRole.SuperAdmin ? (
-                      <option value={UserRole.SuperAdmin}>Super Admin</option>
-                    ) : null}
                   </select>
                 </div>
                 <Field

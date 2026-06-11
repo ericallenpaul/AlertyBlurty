@@ -47,20 +47,14 @@ test.describe.serial("team schedule swaps", () => {
     await loginWithToken(page, members[0].token);
     await requestSwapFromUi(page, autoTeam, members[1].fullName);
     await expect(page.getByText("Swap request submitted.")).toBeVisible();
-    await expect(
-      page.getByRole("cell", { name: members[1].fullName }).first(),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("cell", { name: "Swapped" }).first(),
-    ).toBeVisible();
+    await expect(page.getByText(members[1].fullName).first()).toBeVisible();
+    await expect(page.getByText("Swapped").first()).toBeVisible();
 
     await loginWithToken(page, members[0].token);
     await requestSwapFromUi(page, approvalTeam, members[1].fullName);
     await expect(page.getByText("Swap request submitted.")).toBeVisible();
     await expect(
-      page.getByRole("cell", {
-        name: `Pending swap to ${members[1].fullName}`,
-      }),
+      page.getByText(`Pending swap to ${members[1].fullName}`).first(),
     ).toBeVisible();
 
     await loginWithToken(page, admin.token);
@@ -70,12 +64,8 @@ test.describe.serial("team schedule swaps", () => {
     ).toBeVisible();
     await page.getByRole("button", { name: "Approve" }).click();
     await expect(page.getByText("Swap approved.")).toBeVisible();
-    await expect(
-      page.getByRole("cell", { name: members[1].fullName }).first(),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("cell", { name: "Swapped" }).first(),
-    ).toBeVisible();
+    await expect(page.getByText(members[1].fullName).first()).toBeVisible();
+    await expect(page.getByText("Swapped").first()).toBeVisible();
   });
 });
 
@@ -216,9 +206,7 @@ async function createScheduleFromUi(page: Page, team: TeamContext) {
   await expect(
     page.getByText("Schedule created and shifts generated."),
   ).toBeVisible();
-  await expect(
-    page.getByRole("cell", { name: "Schedule Member 1" }).first(),
-  ).toBeVisible();
+  await expect(page.getByText("Schedule Member 1").first()).toBeVisible();
 }
 
 async function requestSwapFromUi(

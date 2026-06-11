@@ -66,7 +66,7 @@ public static class TeamEndpoints
             return Results.Created($"/api/teams/{createdTeam.Id}", createdTeam);
         })
         .WithName("CreateTeam")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         group.MapPut("/{id:guid}", async (
             [FromRoute] Guid id,
@@ -89,7 +89,7 @@ public static class TeamEndpoints
             return Results.Ok(updatedTeam);
         })
         .WithName("UpdateTeam")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         group.MapDelete("/{id:guid}", async (
             [FromRoute] Guid id,
@@ -100,7 +100,7 @@ public static class TeamEndpoints
             return Results.NoContent();
         })
         .WithName("DeleteTeam")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         // Team members endpoints
         group.MapGet("/{teamId:guid}/members", async (
@@ -131,7 +131,7 @@ public static class TeamEndpoints
             return Results.Created($"/api/teams/{teamId}/members", createdMember);
         })
         .WithName("AddTeamMember")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         group.MapDelete("/{teamId:guid}/members/{userId:guid}", async (
             [FromRoute] Guid teamId,
@@ -143,6 +143,6 @@ public static class TeamEndpoints
             return Results.NoContent();
         })
         .WithName("RemoveTeamMember")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
     }
 }

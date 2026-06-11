@@ -102,9 +102,6 @@ function normalizeRole(value: unknown): UserRole | null {
       return UserRole.User;
     case "admin":
       return UserRole.Admin;
-    case "superadmin":
-    case "super admin":
-      return UserRole.SuperAdmin;
     default:
       return null;
   }

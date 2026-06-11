@@ -40,8 +40,6 @@ export function UsersPage() {
 
   const counts = useMemo(
     () => ({
-      superAdmins: users.filter((user) => user.role === UserRole.SuperAdmin)
-        .length,
       admins: users.filter((user) => user.role === UserRole.Admin).length,
       users: users.filter((user) => user.role === UserRole.User).length,
     }),
@@ -75,11 +73,6 @@ export function UsersPage() {
               active={filter === "all"}
               label={`All Users (${users.length})`}
               onClick={() => setFilter("all")}
-            />
-            <RoleFilterButton
-              active={filter === UserRole.SuperAdmin}
-              label={`Super Admins (${counts.superAdmins})`}
-              onClick={() => setFilter(UserRole.SuperAdmin)}
             />
             <RoleFilterButton
               active={filter === UserRole.Admin}

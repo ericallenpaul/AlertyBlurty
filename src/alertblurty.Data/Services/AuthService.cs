@@ -83,7 +83,7 @@ public class AuthService : IAuthService
 
         var createdOrg = await _organizationRepository.CreateAsync(organization, cancellationToken);
 
-        // Create user (first user is SuperAdmin)
+        // Create user (first user is Admin)
         var userDto = new UserDto
         {
             OrganizationId = createdOrg.Id,
@@ -91,7 +91,7 @@ public class AuthService : IAuthService
             FullName = request.FullName,
             PhoneNumber = request.PhoneNumber,
             Timezone = request.Timezone,
-            Role = UserRole.SuperAdmin,
+            Role = UserRole.Admin,
             IsActive = true
         };
 

@@ -1,4 +1,9 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import type { EventClickArg, EventInput } from "@fullcalendar/core";
 
 import {
   approveSwapRequest,
@@ -38,6 +43,14 @@ function formatDateTime(value: string) {
   }).format(new Date(value));
 }
 
+function shiftStatusText(shift: OnCallShiftDto) {
+  if (shift.hasPendingSwapRequest) {
+    return `Pending swap to ${shift.pendingSwapTargetUserFullName ?? shift.pendingSwapTargetUserId}`;
+  }
+
+  return shift.isSwapped ? "Swapped" : "Scheduled";
+}
+
 export function TeamSchedulePanel({
   teamId,
   members,
@@ -51,6 +64,7 @@ export function TeamSchedulePanel({
   const [scheduleName, setScheduleName] = useState("");
   const [startTime, setStartTime] = useState(() => toInputDateTime(new Date()));
   const [swapTargets, setSwapTargets] = useState<Record<string, string>>({});
+  const [selectedShiftId, setSelectedShiftId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,6 +72,31 @@ export function TeamSchedulePanel({
   const activeMembers = useMemo(
     () => members.filter((member) => member.isActive),
     [members],
+  );
+  const selectedShift = useMemo(
+    () => shifts.find((shift) => shift.id === selectedShiftId) ?? shifts[0],
+    [selectedShiftId, shifts],
+  );
+  const calendarEvents = useMemo<EventInput[]>(
+    () =>
+      shifts.map((shift) => ({
+        id: shift.id,
+        title: shift.userFullName ?? shift.userId,
+        start: shift.startTimeUtc,
+        end: shift.endTimeUtc,
+        backgroundColor: shift.hasPendingSwapRequest
+          ? "#ffc107"
+          : shift.isSwapped
+            ? "#198754"
+            : "#0d6efd",
+        borderColor: shift.hasPendingSwapRequest
+          ? "#ffc107"
+          : shift.isSwapped
+            ? "#198754"
+            : "#0d6efd",
+        textColor: shift.hasPendingSwapRequest ? "#212529" : "#ffffff",
+      })),
+    [shifts],
   );
 
   async function loadSchedules() {
@@ -72,10 +111,17 @@ export function TeamSchedulePanel({
   async function loadScheduleData(scheduleId: string) {
     if (!scheduleId) {
       setShifts([]);
+      setSelectedShiftId("");
       return;
     }
 
-    setShifts(await getScheduleShifts(scheduleId));
+    const loadedShifts = await getScheduleShifts(scheduleId);
+    setShifts(loadedShifts);
+    setSelectedShiftId((current) =>
+      loadedShifts.some((shift) => shift.id === current)
+        ? current
+        : loadedShifts[0]?.id || "",
+    );
   }
 
   async function loadSwapRequests() {
@@ -215,6 +261,17 @@ export function TeamSchedulePanel({
   const pendingSwapRequests = swapRequests.filter(
     (request) => request.status === ShiftSwapRequestStatus.Pending,
   );
+  const selectedShiftCanRequestSwap =
+    selectedShift != null &&
+    currentUserId === selectedShift.userId &&
+    !selectedShift.hasPendingSwapRequest;
+  const selectedShiftTargetMembers = selectedShift
+    ? activeMembers.filter((member) => member.userId !== selectedShift.userId)
+    : [];
+
+  function handleEventClick(eventClick: EventClickArg) {
+    setSelectedShiftId(eventClick.event.id);
+  }
 
   return (
     <div className="card shadow mt-4">
@@ -299,88 +356,82 @@ export function TeamSchedulePanel({
         {shifts.length === 0 ? (
           <p className="text-muted mb-0">No shifts generated yet.</p>
         ) : (
-          <div className="table-responsive">
-            <table className="table align-middle">
-              <thead>
-                <tr>
-                  <th>Start</th>
-                  <th>Assignee</th>
-                  <th>Status</th>
-                  <th>Swap</th>
-                </tr>
-              </thead>
-              <tbody>
-                {shifts.map((shift, index) => {
-                  const canRequestSwap =
-                    currentUserId === shift.userId &&
-                    !shift.hasPendingSwapRequest;
-                  const targetMembers = activeMembers.filter(
-                    (member) => member.userId !== shift.userId,
-                  );
-
-                  return (
-                    <tr key={shift.id}>
-                      <td>{formatDateTime(shift.startTimeUtc)}</td>
-                      <td>{shift.userFullName ?? shift.userId}</td>
-                      <td>
-                        {shift.hasPendingSwapRequest
-                          ? `Pending swap to ${shift.pendingSwapTargetUserFullName ?? shift.pendingSwapTargetUserId}`
-                          : shift.isSwapped
-                            ? "Swapped"
-                            : "Scheduled"}
-                      </td>
-                      <td>
-                        {canRequestSwap ? (
-                          <div className="d-flex gap-2">
-                            <label
-                              className="visually-hidden"
-                              htmlFor={`swapTarget-${shift.id}`}
-                            >
-                              Swap target
-                            </label>
-                            <select
-                              aria-label="Swap target"
-                              className="form-select form-select-sm"
-                              id={`swapTarget-${shift.id}`}
-                              onChange={(event) =>
-                                setSwapTargets((current) => ({
-                                  ...current,
-                                  [shift.id]: event.target.value,
-                                }))
-                              }
-                              value={swapTargets[shift.id] ?? ""}
-                            >
-                              <option value="">Select member</option>
-                              {targetMembers.map((member) => (
-                                <option
-                                  key={member.userId}
-                                  value={member.userId}
-                                >
-                                  {member.userFullName ?? member.userId}
-                                </option>
-                              ))}
-                            </select>
-                            <button
-                              className="btn btn-outline-primary btn-sm"
-                              onClick={() => void handleRequestSwap(shift)}
-                              type="button"
-                            >
-                              Request Swap
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-muted small">
-                            {index === 0 && currentUserId
-                              ? "No action available"
-                              : ""}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="team-schedule-grid">
+            <div
+              className="team-schedule-calendar"
+              aria-label="Team schedule calendar"
+            >
+              <FullCalendar
+                eventClick={handleEventClick}
+                events={calendarEvents}
+                headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: "dayGridMonth,timeGridWeek",
+                }}
+                height="auto"
+                initialView="dayGridMonth"
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              />
+            </div>
+            {selectedShift ? (
+              <aside
+                className="team-schedule-details"
+                aria-label="Shift details"
+              >
+                <h3 className="h6">Shift Details</h3>
+                <dl className="mb-3">
+                  <dt>Assignee</dt>
+                  <dd>{selectedShift.userFullName ?? selectedShift.userId}</dd>
+                  <dt>Start</dt>
+                  <dd>{formatDateTime(selectedShift.startTimeUtc)}</dd>
+                  <dt>End</dt>
+                  <dd>{formatDateTime(selectedShift.endTimeUtc)}</dd>
+                  <dt>Status</dt>
+                  <dd>{shiftStatusText(selectedShift)}</dd>
+                </dl>
+                {selectedShiftCanRequestSwap ? (
+                  <div className="d-grid gap-2">
+                    <label
+                      className="form-label"
+                      htmlFor={`swapTarget-${selectedShift.id}`}
+                    >
+                      Swap target
+                    </label>
+                    <select
+                      aria-label="Swap target"
+                      className="form-select form-select-sm"
+                      id={`swapTarget-${selectedShift.id}`}
+                      onChange={(event) =>
+                        setSwapTargets((current) => ({
+                          ...current,
+                          [selectedShift.id]: event.target.value,
+                        }))
+                      }
+                      value={swapTargets[selectedShift.id] ?? ""}
+                    >
+                      <option value="">Select member</option>
+                      {selectedShiftTargetMembers.map((member) => (
+                        <option key={member.userId} value={member.userId}>
+                          {member.userFullName ?? member.userId}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className="btn btn-outline-primary btn-sm"
+                      onClick={() => void handleRequestSwap(selectedShift)}
+                      type="button"
+                    >
+                      Request Swap
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-muted small mb-0">
+                    No swap action available.
+                  </p>
+                )}
+              </aside>
+            ) : null}
           </div>
         )}
 

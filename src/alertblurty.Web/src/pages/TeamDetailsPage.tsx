@@ -21,7 +21,7 @@ import {
 import { errorMessage } from "./pageUtils";
 
 function canManage(role?: UserRole) {
-  return role === UserRole.Admin || role === UserRole.SuperAdmin;
+  return role === UserRole.Admin;
 }
 
 export function TeamDetailsPage() {

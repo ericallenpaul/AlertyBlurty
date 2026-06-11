@@ -20,6 +20,5 @@ public class User : BaseEntity
 public enum UserRole
 {
     User = 0,
-    Admin = 1,
-    SuperAdmin = 2
+    Admin = 1
 }

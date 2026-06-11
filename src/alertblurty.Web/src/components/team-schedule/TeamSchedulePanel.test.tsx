@@ -87,7 +87,7 @@ describe("TeamSchedulePanel", () => {
       />,
     );
 
-    await screen.findByText("Member One");
+    await screen.findByRole("button", { name: "Request Swap" });
     await userEvent.selectOptions(screen.getByLabelText("Swap target"), [
       "user-two",
     ]);

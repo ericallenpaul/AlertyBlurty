@@ -47,7 +47,7 @@ public static class ScheduleEndpoints
             return Results.Created($"/api/schedules/{schedule.Id}", schedule);
         })
         .WithName("CreateSchedule")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         schedules.MapGet("/{scheduleId:guid}/shifts", async (
             [FromRoute] Guid scheduleId,
@@ -76,7 +76,7 @@ public static class ScheduleEndpoints
             }
         })
         .WithName("GenerateScheduleShifts")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         var shifts = app.MapGroup("/api/shifts")
             .WithTags("Shifts")
@@ -126,7 +126,7 @@ public static class ScheduleEndpoints
             return Results.Ok(requests);
         })
         .WithName("GetTeamSwapRequests")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         swaps.MapPost("/{swapRequestId:guid}/approve", async (
             [FromRoute] Guid swapRequestId,
@@ -157,7 +157,7 @@ public static class ScheduleEndpoints
             }
         })
         .WithName("ApproveSwapRequest")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         swaps.MapPost("/{swapRequestId:guid}/reject", async (
             [FromRoute] Guid swapRequestId,
@@ -188,7 +188,7 @@ public static class ScheduleEndpoints
             }
         })
         .WithName("RejectSwapRequest")
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "SuperAdmin"));
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
     }
 
     private static Guid? GetCurrentUserId(ClaimsPrincipal user)

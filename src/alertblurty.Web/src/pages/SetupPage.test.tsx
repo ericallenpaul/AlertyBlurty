@@ -32,7 +32,7 @@ function authResponse(): AuthResponse {
     token: tokenWithPayload({
       sub: "admin-id",
       email: "admin@example.com",
-      role: "SuperAdmin",
+      role: "Admin",
       OrganizationId: "org-id",
       exp: Math.floor(Date.now() / 1000) + 60,
     }),
@@ -45,7 +45,7 @@ function authResponse(): AuthResponse {
       fullName: "Admin User",
       phoneNumber: "+15551234567",
       timezone: "America/New_York",
-      role: UserRole.SuperAdmin,
+      role: UserRole.Admin,
       isActive: true,
     },
   };

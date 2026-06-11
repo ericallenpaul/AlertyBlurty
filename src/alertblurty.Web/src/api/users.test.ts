@@ -29,7 +29,7 @@ describe("users api client", () => {
     });
 
     await updateUser("user-id", {
-      role: UserRole.SuperAdmin,
+      role: UserRole.User,
     });
 
     expect(post).toHaveBeenCalledWith(
@@ -38,7 +38,7 @@ describe("users api client", () => {
     );
     expect(put).toHaveBeenCalledWith(
       "/api/users/user-id",
-      expect.objectContaining({ role: 2 }),
+      expect.objectContaining({ role: 0 }),
     );
   });
 });

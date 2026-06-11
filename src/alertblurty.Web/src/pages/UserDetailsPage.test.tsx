@@ -57,46 +57,25 @@ describe("UserDetailsPage", () => {
     );
   });
 
-  it("does not expose SuperAdmin role or delete action to admins", async () => {
+  it("lets admins update roles and delete users", async () => {
     renderUserDetails();
 
     await screen.findByText("User Example");
 
-    expect(screen.queryByText("Delete User")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Role")).not.toHaveTextContent("Super Admin");
-  });
-
-  it("does not let admins change an existing SuperAdmin role", async () => {
-    usersApi.getUser.mockResolvedValue(user(UserRole.SuperAdmin));
-    renderUserDetails();
-
-    await screen.findByText("User Example");
-
-    expect(screen.queryByLabelText("Role")).not.toBeInTheDocument();
-    expect(
-      screen.getByText("Role changes are restricted for Super Admin accounts."),
-    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Delete User" })).toBeVisible();
+    expect(screen.getByLabelText("Role")).toHaveTextContent("Admin");
+    await userEvent.selectOptions(screen.getByLabelText("Role"), [
+      String(UserRole.Admin),
+    ]);
 
     await userEvent.click(screen.getByRole("button", { name: "Save Changes" }));
 
     await waitFor(() =>
       expect(usersApi.updateUser).toHaveBeenCalledWith(
         "user-id",
-        expect.not.objectContaining({ role: expect.anything() }),
+        expect.objectContaining({ role: UserRole.Admin }),
       ),
     );
-  });
-
-  it("allows SuperAdmins to choose SuperAdmin and delete users", async () => {
-    auth.useAuth.mockReturnValue({
-      claims: { role: UserRole.SuperAdmin, organizationId: "org-id" },
-      isAuthenticated: true,
-    });
-    renderUserDetails();
-
-    await screen.findByText("User Example");
-
-    expect(screen.getByLabelText("Role")).toHaveTextContent("Super Admin");
     await userEvent.click(screen.getByRole("button", { name: "Delete User" }));
 
     await waitFor(() =>
