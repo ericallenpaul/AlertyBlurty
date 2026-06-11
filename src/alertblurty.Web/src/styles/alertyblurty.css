@@ -86,7 +86,7 @@ a:hover,
 .app-sidebar-controls {
     display: flex;
     gap: 0.5rem;
-    justify-content: center;
+    justify-content: flex-end;
 }
 
 .app-icon-button {
@@ -166,8 +166,7 @@ a:hover,
     padding-right: 0;
 }
 
-.app-sidebar-collapsed .app-sidebar-label,
-.app-sidebar-collapsed .app-sidebar-controls button:nth-child(2) {
+.app-sidebar-collapsed .app-sidebar-label {
     display: none;
 }
 
@@ -389,8 +388,7 @@ a:hover,
         transform: translateX(0);
     }
 
-    .app-sidebar-collapsed .app-sidebar-label,
-    .app-sidebar-collapsed .app-sidebar-controls button:nth-child(2) {
+    .app-sidebar-collapsed .app-sidebar-label {
         display: inline-flex;
     }
 
