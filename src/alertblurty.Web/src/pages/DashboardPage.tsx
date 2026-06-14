@@ -149,7 +149,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="card shadow mt-4">
+      <div className="card shadow mt-4 dashboard-oncall-card">
         <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
           <h2 className="h5 mb-0">On-Call Coverage</h2>
           <Link className="btn btn-light btn-sm" to="/on-call-calendar">
@@ -258,7 +258,7 @@ function SummaryCard({
 }) {
   return (
     <div className="col-md-3">
-      <div className={`card border-${border}`}>
+      <div className={`card summary-card border-${border}`}>
         <div className="card-body">
           <h2 className="h6 text-muted mb-1">{label}</h2>
           <div className="h2 mb-0" data-testid={testId}>
