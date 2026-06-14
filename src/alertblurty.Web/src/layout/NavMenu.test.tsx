@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { AuthProvider } from "../auth/AuthProvider";
 import { NavMenu } from "./NavMenu";
@@ -37,6 +37,13 @@ function renderNavMenu() {
 describe("NavMenu", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    document.documentElement.removeAttribute("data-theme");
+    document.documentElement.removeAttribute("data-bs-theme");
+  });
+
+  afterEach(() => {
+    document.documentElement.removeAttribute("data-theme");
+    document.documentElement.removeAttribute("data-bs-theme");
   });
 
   it("collapses and expands the sidebar", async () => {
@@ -124,5 +131,43 @@ describe("NavMenu", () => {
         .querySelector(".bi-layout-sidebar-inset"),
     ).not.toBeNull();
     expect(container.querySelector(".app-sidebar-initial")).toBeNull();
+  });
+
+  it("defaults to light mode and exposes a dark mode switch", () => {
+    renderNavMenu();
+
+    expect(document.documentElement).toHaveAttribute("data-theme", "light");
+    expect(document.documentElement).toHaveAttribute("data-bs-theme", "light");
+    expect(
+      screen.getByRole("button", { name: "Switch to dark mode" }),
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("switches to dark mode and persists the preference", async () => {
+    renderNavMenu();
+    const user = userEvent.setup();
+
+    await user.click(
+      screen.getByRole("button", { name: "Switch to dark mode" }),
+    );
+
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+    expect(document.documentElement).toHaveAttribute("data-bs-theme", "dark");
+    expect(window.localStorage.getItem("colorMode")).toBe("dark");
+    expect(
+      screen.getByRole("button", { name: "Switch to light mode" }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("restores a saved dark mode preference", () => {
+    window.localStorage.setItem("colorMode", "dark");
+
+    renderNavMenu();
+
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+    expect(document.documentElement).toHaveAttribute("data-bs-theme", "dark");
+    expect(
+      screen.getByRole("button", { name: "Switch to light mode" }),
+    ).toBeInTheDocument();
   });
 });

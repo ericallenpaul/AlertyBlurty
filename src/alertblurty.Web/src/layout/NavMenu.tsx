@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthProvider";
@@ -9,6 +9,9 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 }
 
 const sidebarExpandedStorageKey = "sidebarExpanded";
+const colorModeStorageKey = "colorMode";
+
+type ColorMode = "light" | "dark";
 
 type NavItem = {
   label: string;
@@ -35,8 +38,18 @@ export function NavMenu() {
   const [isExpanded, setIsExpanded] = useState(() => {
     return window.localStorage.getItem(sidebarExpandedStorageKey) !== "false";
   });
+  const [colorMode, setColorMode] = useState<ColorMode>(() => {
+    return window.localStorage.getItem(colorModeStorageKey) === "dark"
+      ? "dark"
+      : "light";
+  });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const canManage = claims?.role === UserRole.Admin;
+
+  useLayoutEffect(() => {
+    document.documentElement.dataset.theme = colorMode;
+    document.documentElement.dataset.bsTheme = colorMode;
+  }, [colorMode]);
 
   if (!isAuthenticated) {
     return null;
@@ -50,6 +63,14 @@ export function NavMenu() {
     setIsExpanded((current) => {
       const next = !current;
       window.localStorage.setItem(sidebarExpandedStorageKey, String(next));
+      return next;
+    });
+  }
+
+  function toggleColorMode() {
+    setColorMode((current) => {
+      const next = current === "dark" ? "light" : "dark";
+      window.localStorage.setItem(colorModeStorageKey, next);
       return next;
     });
   }
@@ -103,6 +124,22 @@ export function NavMenu() {
           />
         </NavLink>
         <div className="app-sidebar-controls">
+          <button
+            aria-label={
+              colorMode === "dark"
+                ? "Switch to light mode"
+                : "Switch to dark mode"
+            }
+            aria-pressed={colorMode === "dark"}
+            className="btn btn-outline-light app-icon-button"
+            onClick={toggleColorMode}
+            type="button"
+          >
+            <i
+              aria-hidden="true"
+              className={`bi ${colorMode === "dark" ? "bi-sun" : "bi-moon"}`}
+            />
+          </button>
           <button
             aria-expanded={isExpanded}
             aria-label={
