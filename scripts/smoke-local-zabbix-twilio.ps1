@@ -18,7 +18,8 @@ param(
     [string]$SmokePhoneNumber = "+15026933830",
     [string]$SmokeTimezone = "America/New_York",
     [int]$PollSeconds = 10,
-    [int]$PollTimeoutSeconds = 240
+    [int]$PollTimeoutSeconds = 240,
+    [int]$ZabbixConfigWarmupSeconds = 75
 )
 
 $ErrorActionPreference = "Stop"
@@ -636,6 +637,7 @@ $preflight = [ordered]@{
     webhookBaseUrl           = $WebhookBaseUrl
     skipZabbix               = [bool]$SkipZabbix
     skipDirectWebhook        = [bool]$SkipDirectWebhook
+    zabbixConfigWarmupSeconds = $ZabbixConfigWarmupSeconds
     twilioAccountSidPresent  = -not [string]::IsNullOrWhiteSpace($twilioAccountSid)
     twilioAuthTokenPresent   = -not [string]::IsNullOrWhiteSpace($twilioAuthToken)
     twilioPhoneNumberPresent = -not [string]::IsNullOrWhiteSpace($twilioPhoneNumber)
@@ -743,6 +745,11 @@ if (-not $SkipZabbix) {
         selectFilter             = "extend"
     }
     Write-JsonFile -Value $configuredAction -Path (Join-Path $artifactRoot "zabbix-configured-action.json")
+
+    if ($ZabbixConfigWarmupSeconds -gt 0) {
+        Write-Step "Waiting for Zabbix server config cache to pick up smoke action"
+        Start-Sleep -Seconds $ZabbixConfigWarmupSeconds
+    }
 
     Write-Step "Ensuring Zabbix trigger is recovered before creating a new problem"
     Remove-Item -LiteralPath $TriggerFile -Force -ErrorAction SilentlyContinue

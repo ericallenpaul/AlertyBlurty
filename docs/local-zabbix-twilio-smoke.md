@@ -43,6 +43,12 @@ $env:SMOKE_ZABBIX_TWILIO_ENABLED = 'true'
 
 The script writes evidence under ignored `artifacts/local-zabbix-twilio-smoke/<runId>/`.
 
+By default, the script waits 75 seconds after configuring Zabbix before it creates the trigger file. This gives the Zabbix server config cache time to pick up the enabled action and updated webhook media type. Override it only when you know the server cache refresh is faster:
+
+```powershell
+.\scripts\smoke-local-zabbix-twilio.ps1 -RunLive -ZabbixConfigWarmupSeconds 30
+```
+
 ## Cleanup
 
 The script disables the Zabbix action after a successful full run. On a Zabbix timeout it captures `zabbix-timeout-diagnostics.json`, removes the trigger file, and disables the action unless `-SkipCleanup` is used.
