@@ -129,6 +129,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 // Global exception handling
 app.UseMiddleware<GlobalExceptionHandler>();
@@ -150,6 +152,7 @@ app.MapTeamEndpoints();
 app.MapScheduleEndpoints();
 app.MapIncidentEndpoints();
 app.MapWebhookEndpoints();
+app.MapFallbackToFile("index.html");
 
 app.Run();
 

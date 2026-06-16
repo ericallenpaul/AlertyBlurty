@@ -1,0 +1,17 @@
+.git
+.github
+.vs
+.worktrees
+.superpowers
+artifacts
+logs
+.local-logs
+**/bin
+**/obj
+**/node_modules
+**/dist
+.env
+.env.*
+!*.env.example
+src/alertblurty.Api/data
+re-design.pdf

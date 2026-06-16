@@ -26,4 +26,8 @@
     <ProjectReference Include="..\alertblurty.Models\alertblurty.Models.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="wwwroot\**\*" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
