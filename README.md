@@ -12,14 +12,35 @@ alertblurty is a self-hosted on-call alert management system that receives webho
 - **Bidirectional Acknowledgment**: Acknowledges incidents in both alertblurty and Zabbix
 - **On-Call Scheduling**: Flexible scheduling with hourly, daily, weekly, and monthly rotations
 - **Shift Swap Management**: Request and approve shift swaps with optional admin approval
-- **Role-Based Access Control**: Superadmin, admin, and user roles
+- **Role-Based Access Control**: Admin and user roles
 - **Immutable Audit Logging**: Complete audit trail with configurable retention
 - **Web-Based UI**: React web interface for incident and schedule management
 - **First-Run Setup Wizard**: Easy initial configuration
 
 ## Quick Start
 
-### Prerequisites
+### Docker Compose
+
+Docker Compose is the recommended self-hosted install path.
+
+```bash
+git clone https://github.com/ericallenpaul/AlertyBlurty.git
+cd AlertyBlurty
+cp .env.example .env
+docker compose up -d
+```
+
+Open `http://localhost:8080` and complete the first-run setup wizard. Choose `Bundled Docker PostgreSQL` to use the included PostgreSQL service, or `Existing PostgreSQL server` to connect to your own database.
+
+The app image is published as:
+
+```text
+ericallenpaul/alertyblurty
+```
+
+See [Docker Self-Hosting](docs/docker.md) for `.env` values, external PostgreSQL, backups, upgrades, and manual Docker Hub publishing.
+
+### Local Development Prerequisites
 
 - .NET 10 SDK
 - Node.js 24+
@@ -27,7 +48,7 @@ alertblurty is a self-hosted on-call alert management system that receives webho
 - Twilio account (for SMS notifications)
 - Zabbix 7.4 instance
 
-### Installation
+### Local Development
 
 1. **Clone the repository**
    ```bash
@@ -123,37 +144,13 @@ alertblurty is a self-hosted on-call alert management system that receives webho
 
    See `docs/api-guide.md` for complete API documentation and examples.
 
-### Docker Deployment
-
-```bash
-docker run --rm \
-  --name alertyblurty \
-  -p 8080:8080 \
-  -e ASPNETCORE_URLS="http://+:8080" \
-  -e CONNECTION_STRING="Host=postgres;Port=5432;Database=alertyblurty;Username=alerty_app;Password=AppPassword123!" \
-  -e JWT_SECRET="replace-with-a-long-random-secret-at-least-32-chars" \
-  -e TWILIO_ACCOUNT_SID="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  -e TWILIO_SECRET="twilio_auth_token_here" \
-  -e TWILIO_PHONE_NUMBER="+15551234567" \
-  alertyblurty:latest
-```
-
-### Kubernetes Deployment
-
-```bash
-# Apply Kubernetes manifests
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/secret.yaml
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
-```
-
 ## Configuration
 
 ### Environment Variables
 
-**Required Variables:**
+Environment variables can be used to bypass first-run setup values. If present, they override wizard-saved configuration.
+
+**Environment-Based Setup Variables:**
 
 - `CONNECTION_STRING`: PostgreSQL connection string, including username and password
 - `JWT_SECRET`: Secret key for JWT token generation (minimum 32 characters)
@@ -295,8 +292,9 @@ dotnet publish -c Release -o out
 ### Docker Image Build
 
 ```bash
-./scripts/build-docker.sh v1.0.0
-./scripts/push-docker.sh v1.0.0
+docker build -t alertyblurty:local .
+docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.0
+docker tag alertyblurty:local ericallenpaul/alertyblurty:latest
 ```
 
 ## Contributing

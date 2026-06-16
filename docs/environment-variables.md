@@ -3,9 +3,11 @@
 AlertyBlurty supports two setup paths:
 
 - Set environment variables before startup, including one full PostgreSQL `CONNECTION_STRING`.
-- Start the app without database/Twilio values and complete the first-run setup wizard. The wizard asks for database server, port, database name, username, and password, then builds the connection string and runs EF migrations against a blank database.
+- Start the app without database/Twilio values and complete the first-run setup wizard. The wizard asks for bundled Docker PostgreSQL or an existing PostgreSQL server, then builds the connection string and runs EF migrations against a blank database.
 
 Do not use a separate `DB_PASSWORD`; it is intentionally not supported.
+
+Environment variables override wizard-saved values in `appsettings.Local.json`.
 
 ## Required for Environment-Based Setup
 
@@ -16,7 +18,7 @@ Full PostgreSQL connection string for the runtime app user.
 Example:
 
 ```text
-Host=postgres;Port=5432;Database=alertyblurty;Username=alerty_app;Password=AppPassword123!
+Host=postgres;Port=5432;Database=alertyblurty;Username=alerty_app;Password=AppPassword123!;SSL Mode=Disable
 ```
 
 The database must already exist. AlertyBlurty will create and update tables during setup/migration, but it will not create the PostgreSQL database itself.
@@ -73,17 +75,11 @@ Example:
 ## Docker Example
 
 ```bash
-docker run --rm \
-  --name alertyblurty \
-  -p 8080:8080 \
-  -e ASPNETCORE_URLS="http://+:8080" \
-  -e CONNECTION_STRING="Host=postgres;Port=5432;Database=alertyblurty;Username=alerty_app;Password=AppPassword123!" \
-  -e JWT_SECRET="replace-with-a-long-random-secret-at-least-32-chars" \
-  -e TWILIO_ACCOUNT_SID="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  -e TWILIO_SECRET="twilio_auth_token_here" \
-  -e TWILIO_PHONE_NUMBER="+15551234567" \
-  alertyblurty:latest
+cp .env.example .env
+docker compose up -d
 ```
+
+See `docs/docker.md` for Docker Compose, external PostgreSQL, backup, upgrade, and Docker Hub publishing instructions.
 
 ## First-Run Wizard
 
@@ -91,11 +87,13 @@ The wizard stores supplied database, JWT, and Twilio values in an ignored local 
 
 Database fields collected by the wizard:
 
+- Database mode: bundled Docker PostgreSQL or existing PostgreSQL server
 - Server: `postgres` or `localhost`
 - Port: `5432`
 - Database name: `alertyblurty`
 - Username: `alerty_app`
 - Password: the app database user password
+- SSL mode: `Disable`, `Prefer`, or `Require`
 
 Twilio fields collected by the wizard:
 
