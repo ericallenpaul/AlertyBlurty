@@ -10,11 +10,13 @@ public class BootstrapConfigurationTests
     {
         var request = new DatabaseBootstrapOptions
         {
+            Mode = "BundledDocker",
             Server = "postgres",
             Port = 5432,
             DatabaseName = "alertyblurty",
             Username = "alerty_app",
-            Password = "app-password"
+            Password = "app-password",
+            SslMode = "Disable"
         };
 
         var connectionString = BootstrapConfigurationBuilder.BuildPostgresConnectionString(request);
@@ -24,6 +26,27 @@ public class BootstrapConfigurationTests
         connectionString.Should().Contain("Database=alertyblurty");
         connectionString.Should().Contain("Username=alerty_app");
         connectionString.Should().Contain("Password=app-password");
+        connectionString.Should().Contain("SSL Mode=Disable");
+    }
+
+    [Fact]
+    public void BuildPostgresConnectionString_UsesExternalPostgresSslMode()
+    {
+        var request = new DatabaseBootstrapOptions
+        {
+            Mode = "ExternalPostgres",
+            Server = "db.example.com",
+            Port = 5432,
+            DatabaseName = "alertyblurty",
+            Username = "alerty_app",
+            Password = "app-password",
+            SslMode = "Prefer"
+        };
+
+        var connectionString = BootstrapConfigurationBuilder.BuildPostgresConnectionString(request);
+
+        connectionString.Should().Contain("Host=db.example.com");
+        connectionString.Should().Contain("SSL Mode=Prefer");
     }
 
     [Fact]

@@ -7,11 +7,13 @@ namespace alertblurty.Api.Configuration;
 
 public sealed class DatabaseBootstrapOptions
 {
+    public string Mode { get; set; } = "BundledDocker";
     public string Server { get; set; } = string.Empty;
     public int Port { get; set; } = 5432;
     public string DatabaseName { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+    public string SslMode { get; set; } = "Prefer";
 }
 
 public sealed class TwilioBootstrapOptions
@@ -76,6 +78,10 @@ public static class BootstrapConfigurationBuilder
 
     public static string BuildPostgresConnectionString(DatabaseBootstrapOptions options)
     {
+        var sslMode = Enum.TryParse<SslMode>(options.SslMode, ignoreCase: true, out var parsedSslMode)
+            ? parsedSslMode
+            : SslMode.Prefer;
+
         var builder = new NpgsqlConnectionStringBuilder
         {
             Host = Require(options.Server, nameof(options.Server)),
@@ -83,7 +89,8 @@ public static class BootstrapConfigurationBuilder
             Database = Require(options.DatabaseName, nameof(options.DatabaseName)),
             Username = Require(options.Username, nameof(options.Username)),
             Password = options.Password,
-            Pooling = true
+            Pooling = true,
+            SslMode = sslMode
         };
 
         return builder.ConnectionString;

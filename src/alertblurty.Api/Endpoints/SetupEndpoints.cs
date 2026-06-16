@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using alertblurty.Api.Configuration;
 using alertblurty.Data;
 
@@ -98,6 +99,11 @@ public static class SetupEndpoints
 
     private static string? ValidateBootstrapRequest(BootstrapSetupRequest request)
     {
+        if (!IsSupportedDatabaseMode(request.Database.Mode))
+        {
+            return "Database mode must be BundledDocker or ExternalPostgres.";
+        }
+
         if (string.IsNullOrWhiteSpace(request.Database.Server)
             || string.IsNullOrWhiteSpace(request.Database.DatabaseName)
             || string.IsNullOrWhiteSpace(request.Database.Username))
@@ -110,12 +116,23 @@ public static class SetupEndpoints
             return "Database port must be between 1 and 65535.";
         }
 
+        if (!Enum.TryParse<SslMode>(request.Database.SslMode, ignoreCase: true, out _))
+        {
+            return "Database SSL mode is invalid.";
+        }
+
         if (!request.Twilio.IsConfigured)
         {
             return "Twilio account SID, auth token, and phone number are required.";
         }
 
         return null;
+    }
+
+    private static bool IsSupportedDatabaseMode(string mode)
+    {
+        return string.Equals(mode, "BundledDocker", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(mode, "ExternalPostgres", StringComparison.OrdinalIgnoreCase);
     }
 }
 
