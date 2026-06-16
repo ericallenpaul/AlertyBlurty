@@ -6,14 +6,23 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-if (-not (Test-Path -LiteralPath $EnvFile)) {
-    Copy-Item -LiteralPath ".env.example" -Destination $EnvFile
-    Write-Host "Created $EnvFile from .env.example. Review it before production use." -ForegroundColor Yellow
+$projectRoot = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")
+$envFilePath = if ([System.IO.Path]::IsPathRooted($EnvFile)) {
+    $EnvFile
+}
+else {
+    Join-Path $projectRoot $EnvFile
+}
+$envExamplePath = Join-Path $projectRoot ".env.example"
+
+if (-not (Test-Path -LiteralPath $envFilePath)) {
+    Copy-Item -LiteralPath $envExamplePath -Destination $envFilePath
+    Write-Host "Created $envFilePath from .env.example. Review it before production use." -ForegroundColor Yellow
 }
 
-$composeArgs = @("compose", "--env-file", $EnvFile)
+$composeArgs = @("compose", "--project-directory", $projectRoot, "--env-file", $envFilePath)
 if ($ExternalDatabase) {
-    $composeArgs += @("-f", "docker-compose.external-db.yml")
+    $composeArgs += @("-f", (Join-Path $projectRoot "docker-compose.external-db.yml"))
 }
 $composeArgs += @("up", "-d")
 
@@ -23,7 +32,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $port = "18080"
-Get-Content -LiteralPath $EnvFile | ForEach-Object {
+Get-Content -LiteralPath $envFilePath | ForEach-Object {
     if ($_ -match "^\s*ALERTYBLURTY_PORT\s*=\s*(.+?)\s*$") {
         $port = $Matches[1].Trim().Trim('"').Trim("'")
     }
