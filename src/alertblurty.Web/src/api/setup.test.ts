@@ -31,11 +31,13 @@ describe("setup api client", () => {
 
     await bootstrapSetup({
       database: {
+        mode: "BundledDocker",
         server: "postgres",
         port: 5432,
         databaseName: "alertyblurty",
         username: "alerty_app",
         password: "secret",
+        sslMode: "Disable",
       },
       twilio: {
         accountSid: "AC123",
@@ -46,11 +48,13 @@ describe("setup api client", () => {
 
     expect(post).toHaveBeenCalledWith("/api/setup/bootstrap", {
       database: {
+        mode: "BundledDocker",
         server: "postgres",
         port: 5432,
         databaseName: "alertyblurty",
         username: "alerty_app",
         password: "secret",
+        sslMode: "Disable",
       },
       twilio: {
         accountSid: "AC123",

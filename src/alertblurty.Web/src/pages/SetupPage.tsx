@@ -5,6 +5,7 @@ import { bootstrapSetup, getSetupStatus } from "../api/setup";
 import { useAuth } from "../auth/AuthProvider";
 import { ErrorAlert } from "../components/ErrorAlert";
 import { LoadingState } from "../components/LoadingState";
+import type { DatabaseSetupMode, PostgresSslMode } from "../types/api";
 import { timezones } from "./pageUtils";
 
 type SetupStep = 1 | 2 | 3 | 4;
@@ -18,11 +19,15 @@ export function SetupPage() {
   const [step, setStep] = useState<SetupStep>(1);
   const [error, setError] = useState<string | null>(null);
   const [jwtConfigured, setJwtConfigured] = useState(false);
+  const [databaseMode, setDatabaseMode] =
+    useState<DatabaseSetupMode>("BundledDocker");
   const [databaseServer, setDatabaseServer] = useState("postgres");
   const [databasePort, setDatabasePort] = useState("5432");
   const [databaseName, setDatabaseName] = useState("alertyblurty");
   const [databaseUsername, setDatabaseUsername] = useState("alerty_app");
   const [databasePassword, setDatabasePassword] = useState("");
+  const [databaseSslMode, setDatabaseSslMode] =
+    useState<PostgresSslMode>("Disable");
   const [twilioAccountSid, setTwilioAccountSid] = useState("");
   const [twilioAuthToken, setTwilioAuthToken] = useState("");
   const [twilioPhoneNumber, setTwilioPhoneNumber] = useState("");
@@ -76,11 +81,13 @@ export function SetupPage() {
     try {
       await bootstrapSetup({
         database: {
+          mode: databaseMode,
           server: databaseServer.trim(),
           port: Number(databasePort),
           databaseName: databaseName.trim(),
           username: databaseUsername.trim(),
           password: databasePassword,
+          sslMode: databaseSslMode,
         },
         twilio: {
           accountSid: twilioAccountSid.trim(),
@@ -166,6 +173,21 @@ export function SetupPage() {
     }
 
     return null;
+  }
+
+  function handleDatabaseModeChange(mode: DatabaseSetupMode) {
+    setDatabaseMode(mode);
+
+    if (mode === "BundledDocker") {
+      setDatabaseServer("postgres");
+      setDatabasePort("5432");
+      setDatabaseName("alertyblurty");
+      setDatabaseUsername("alerty_app");
+      setDatabaseSslMode("Disable");
+      return;
+    }
+
+    setDatabaseSslMode("Prefer");
   }
 
   function validateAdminAccount() {
@@ -258,6 +280,39 @@ export function SetupPage() {
                     provider.
                   </p>
                   <h2 className="h5 mt-4">Database</h2>
+                  <div className="mb-3">
+                    <div className="form-label">Database Mode *</div>
+                    <div className="database-mode-options">
+                      <label className="form-check">
+                        <input
+                          checked={databaseMode === "BundledDocker"}
+                          className="form-check-input"
+                          name="databaseMode"
+                          onChange={() =>
+                            handleDatabaseModeChange("BundledDocker")
+                          }
+                          type="radio"
+                        />
+                        <span className="form-check-label">
+                          Bundled Docker PostgreSQL
+                        </span>
+                      </label>
+                      <label className="form-check">
+                        <input
+                          checked={databaseMode === "ExternalPostgres"}
+                          className="form-check-input"
+                          name="databaseMode"
+                          onChange={() =>
+                            handleDatabaseModeChange("ExternalPostgres")
+                          }
+                          type="radio"
+                        />
+                        <span className="form-check-label">
+                          Existing PostgreSQL server
+                        </span>
+                      </label>
+                    </div>
+                  </div>
                   <div className="row">
                     <Field
                       id="databaseServer"
@@ -295,6 +350,27 @@ export function SetupPage() {
                       type="password"
                       value={databasePassword}
                     />
+                    {databaseMode === "ExternalPostgres" ? (
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label" htmlFor="databaseSslMode">
+                          SSL Mode *
+                        </label>
+                        <select
+                          className="form-select"
+                          id="databaseSslMode"
+                          onChange={(event) =>
+                            setDatabaseSslMode(
+                              event.target.value as PostgresSslMode,
+                            )
+                          }
+                          value={databaseSslMode}
+                        >
+                          <option value="Disable">Disable</option>
+                          <option value="Prefer">Prefer</option>
+                          <option value="Require">Require</option>
+                        </select>
+                      </div>
+                    ) : null}
                     {!jwtConfigured ? (
                       <Field
                         id="jwtSecret"

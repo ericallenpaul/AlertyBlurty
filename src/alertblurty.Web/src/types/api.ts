@@ -76,12 +76,18 @@ export interface SetupStatusResponse {
   hasOrganizations: boolean;
 }
 
+export type DatabaseSetupMode = "BundledDocker" | "ExternalPostgres";
+
+export type PostgresSslMode = "Disable" | "Prefer" | "Require";
+
 export interface DatabaseBootstrapOptions {
+  mode: DatabaseSetupMode;
   server: string;
   port: number;
   databaseName: string;
   username: string;
   password: string;
+  sslMode: PostgresSslMode;
 }
 
 export interface TwilioBootstrapOptions {
