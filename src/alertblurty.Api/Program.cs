@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -138,7 +139,10 @@ if (!app.Environment.IsProduction())
     app.UseHttpsRedirection();
 }
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = DisableIndexCaching
+});
 
 // Global exception handling
 app.UseMiddleware<GlobalExceptionHandler>();
@@ -160,7 +164,10 @@ app.MapTeamEndpoints();
 app.MapScheduleEndpoints();
 app.MapIncidentEndpoints();
 app.MapWebhookEndpoints();
-app.MapFallbackToFile("index.html");
+app.MapFallbackToFile("index.html", new StaticFileOptions
+{
+    OnPrepareResponse = DisableIndexCaching
+});
 
 LogStartupInstructions(app);
 
@@ -176,6 +183,18 @@ static void LogStartupInstructions(WebApplication app)
     app.Logger.LogInformation(
         "AlertyBlurty is running. If using Docker Compose defaults, open http://localhost:{HostPort} and complete first-run setup. If ALERTYBLURTY_PORT or a reverse proxy is configured, use that public URL instead.",
         hostPort);
+}
+
+static void DisableIndexCaching(StaticFileResponseContext context)
+{
+    if (!string.Equals(context.File.Name, "index.html", StringComparison.OrdinalIgnoreCase))
+    {
+        return;
+    }
+
+    context.Context.Response.Headers.CacheControl = "no-store, no-cache, must-revalidate";
+    context.Context.Response.Headers.Pragma = "no-cache";
+    context.Context.Response.Headers.Expires = "0";
 }
 
 public partial class Program;

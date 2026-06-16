@@ -106,7 +106,7 @@ describe("SetupPage", () => {
     fireEvent.change(screen.getByLabelText("Password *"), {
       target: { value: "db-secret" },
     });
-    fireEvent.change(screen.getByLabelText("JWT Secret *"), {
+    fireEvent.change(screen.getByLabelText(/JWT Secret/), {
       target: { value: "jwt-secret-with-enough-length-for-tests" },
     });
     fireEvent.change(screen.getByLabelText("Account SID *"), {
@@ -125,11 +125,13 @@ describe("SetupPage", () => {
     await waitFor(() =>
       expect(setupApi.bootstrapSetup).toHaveBeenCalledWith({
         database: {
+          mode: "BundledDocker",
           server: "postgres",
           port: 5432,
           databaseName: "alertyblurty",
           username: "alerty_app",
           password: "db-secret",
+          sslMode: "Disable",
         },
         twilio: {
           accountSid: "AC123",
