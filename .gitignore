@@ -403,6 +403,7 @@ logs/
 .local-logs/
 .env
 .env.*
+!.env.example
 .worktrees/
 appsettings.Development.json
 appsettings.Local.json

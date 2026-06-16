@@ -1,0 +1,30 @@
+services:
+  alertyblurty:
+    image: ${ALERTYBLURTY_IMAGE:-ericallenpaul/alertyblurty:latest}
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "${ALERTYBLURTY_PORT:-8080}:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ALERTYBLURTY_CONFIG_PATH: ${ALERTYBLURTY_CONFIG_PATH:-/app/data/appsettings.Local.json}
+      CONNECTION_STRING: ${CONNECTION_STRING:-}
+      JWT_SECRET: ${JWT_SECRET:-}
+      JWT_ISSUER: ${JWT_ISSUER:-AlertyBlurty}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-AlertyBlurty}
+      JWT_EXPIRY_HOURS: ${JWT_EXPIRY_HOURS:-24}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:-}
+    volumes:
+      - alertyblurty-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  alertyblurty-data:

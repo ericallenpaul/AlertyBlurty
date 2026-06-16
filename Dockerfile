@@ -23,7 +23,11 @@ WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ALERTYBLURTY_CONFIG_PATH=/app/data/appsettings.Local.json
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /app/data
 COPY --from=api-build /app/publish ./
 EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD curl -fsS http://localhost:8080/health || exit 1
 ENTRYPOINT ["dotnet", "alertblurty.Api.dll"]
