@@ -17,11 +17,11 @@ alertblurty is a self-hosted on-call alert management system that receives webho
 - **Web-Based UI**: React web interface for incident and schedule management
 - **First-Run Setup Wizard**: Easy initial configuration
 
-## Quick Start
+## Install Via Docker Compose
 
-### Docker Compose
+Docker Compose is the recommended self-hosted install path. It runs AlertyBlurty and PostgreSQL as separate containers with persistent volumes.
 
-Docker Compose is the recommended self-hosted install path.
+### Quick Start
 
 ```bash
 git clone https://github.com/ericallenpaul/AlertyBlurty.git
@@ -34,7 +34,9 @@ Open `http://localhost:18080` and complete the first-run setup wizard. Choose `B
 
 The Docker host port is set by `ALERTYBLURTY_PORT` in `.env` before startup. The first-run wizard cannot change it because Docker publishes ports before the app starts.
 
-On Windows, you can use the helper script instead:
+### Helper Scripts
+
+On Windows:
 
 ```powershell
 .\scripts\start-docker.ps1
@@ -48,15 +50,74 @@ On Linux or macOS:
 
 The helper starts Docker Compose and prints the URL to open.
 
-The app image is published as:
+### Docker Image
+
+The app image is published on Docker Hub:
 
 ```text
 ericallenpaul/alertyblurty
 ```
 
+Current tags:
+
+- `ericallenpaul/alertyblurty:0.1.1`
+- `ericallenpaul/alertyblurty:latest`
+
 See [Docker Self-Hosting](docs/docker.md) for `.env` values, external PostgreSQL, backups, upgrades, and manual Docker Hub publishing.
 
-### Local Development Prerequisites
+## Docker Compose File
+
+This repository includes ready-to-use Compose files:
+
+- [`docker-compose.yml`](docker-compose.yml): AlertyBlurty with bundled PostgreSQL
+- [`docker-compose.external-db.yml`](docker-compose.external-db.yml): AlertyBlurty only, for external PostgreSQL
+
+Minimal bundled PostgreSQL example:
+
+```yaml
+services:
+  alertyblurty:
+    image: ericallenpaul/alertyblurty:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "18080:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ALERTYBLURTY_PORT: 18080
+      ALERTYBLURTY_CONFIG_PATH: /app/data/appsettings.Local.json
+    volumes:
+      - alertyblurty-data:/app/data
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: alertyblurty
+      POSTGRES_USER: alerty_app
+      POSTGRES_PASSWORD: change-this-postgres-password
+    volumes:
+      - alertyblurty-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  alertyblurty-data:
+  alertyblurty-postgres-data:
+```
+
+For production use, copy `.env.example` to `.env`, set a strong `POSTGRES_PASSWORD`, and run the repository-provided `docker-compose.yml`.
+
+## Install From Source
+
+Use source installation for development or for operators who want to build and run the API/frontend manually.
+
+### Prerequisites
 
 - .NET 10 SDK
 - Node.js 24+
@@ -64,12 +125,12 @@ See [Docker Self-Hosting](docs/docker.md) for `.env` values, external PostgreSQL
 - Twilio account (for SMS notifications)
 - Zabbix 7.4 instance
 
-### Local Development
+### Steps
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd alertblurty
+   git clone https://github.com/ericallenpaul/AlertyBlurty.git
+   cd AlertyBlurty
    ```
 
 2. **Set up PostgreSQL database**
@@ -91,7 +152,7 @@ See [Docker Self-Hosting](docs/docker.md) for `.env` values, external PostgreSQL
      GRANT EXECUTE ON FUNCTIONS TO alertyblurty_app;
    ```
 
-3. **Configure secrets (Local Development)**
+3. **Configure secrets**
 
    Store sensitive configuration in .NET User Secrets (outside the repository), or provide database and Twilio settings in the first-run setup wizard:
    ```bash
@@ -156,7 +217,7 @@ See [Docker Self-Hosting](docs/docker.md) for `.env` values, external PostgreSQL
 
 8. **Initialize and register your organization**
 
-   Open the web UI and use the first-run setup wizard. If `CONNECTION_STRING` and Twilio variables are not already set, the wizard asks for database server, port, database name, username, password, and Twilio settings, then applies EF migrations to the blank database.
+   Open the web UI and use the first-run setup wizard. If `CONNECTION_STRING` and Twilio variables are not already set, the wizard asks for database mode, server, port, database name, username, password, SSL mode, and Twilio settings, then applies EF migrations to the blank database.
 
    See `docs/api-guide.md` for complete API documentation and examples.
 
@@ -218,16 +279,14 @@ tests/
 - **SMS**: Twilio SDK
 - **Authentication**: JWT Bearer tokens
 - **Containerization**: Docker
-- **Orchestration**: Kubernetes
+- **Self-Hosting**: Docker Compose
 
 ## Documentation
 
+- **[Docker Self-Hosting](docs/docker.md)** - Docker Compose install, external database setup, backups, upgrades, and image publishing
 - **[API Usage Guide](docs/api-guide.md)** - Complete API reference with curl examples
 - **[Environment Variables](docs/environment-variables.md)** - Configuration reference for all environments
 - **[Frontend Deployment](docs/frontend-deployment.md)** - Static React artifact hosting model
-- [Database Schema](docs/database-schema.md) - Schema documentation
-- [Deployment Guide](docs/deployment.md) - Production deployment instructions
-- [Monitoring & Operations](docs/monitoring.md) - Observability and operations guide
 - [Release Process](docs/release-process.md) - Tagged release and rollback workflow
 - [Release Notes v0.1.0](docs/release-notes-v0.1.0.md) - Initial OSS preview notes
 - [Security Policy](SECURITY.md) - Vulnerability reporting and disclosure process
@@ -268,7 +327,7 @@ For interactive testing, visit the Swagger UI at `http://localhost:5041/swagger`
          eventTime: params.eventTime
      };
      var response = req.post(
-         'http://your-alertyblurty-host:5041/api/webhooks/zabbix/{teamId}',
+         'http://your-alertyblurty-host:18080/api/webhooks/zabbix/{teamId}',
          JSON.stringify(payload)
      );
      return response;
