@@ -55,6 +55,7 @@ public static class SetupEndpoints
         group.MapPost("/bootstrap", async (
             [FromBody] BootstrapSetupRequest request,
             [FromServices] BootstrapConfigurationStore configuration,
+            [FromServices] IConfiguration appConfiguration,
             CancellationToken cancellationToken) =>
         {
             var validationError = ValidateBootstrapRequest(request);
@@ -63,7 +64,8 @@ public static class SetupEndpoints
                 return Results.BadRequest(new { message = validationError });
             }
 
-            var connectionString = BootstrapConfigurationBuilder.BuildPostgresConnectionString(request.Database);
+            var bootstrapDatabase = BuildBootstrapDatabaseOptions(request.Database, appConfiguration);
+            var connectionString = BootstrapConfigurationBuilder.BuildPostgresConnectionString(bootstrapDatabase);
             var jwtSecret = string.IsNullOrWhiteSpace(request.JwtSecret)
                 ? configuration.Current.JwtSecret
                 : request.JwtSecret.Trim();
@@ -75,7 +77,7 @@ public static class SetupEndpoints
 
             var snapshot = new RuntimeConfigurationSnapshot
             {
-                ConnectionString = connectionString,
+                ConnectionString = BootstrapConfigurationBuilder.BuildPostgresConnectionString(request.Database),
                 JwtSecret = jwtSecret,
                 JwtIssuer = configuration.Current.JwtIssuer,
                 JwtAudience = configuration.Current.JwtAudience,
@@ -91,6 +93,7 @@ public static class SetupEndpoints
             {
                 await using var dbContext = new AlertBlurtyDbContext(dbOptions);
                 await dbContext.Database.MigrateAsync(cancellationToken);
+                await RotateBundledPostgresPasswordAsync(dbContext, request.Database, bootstrapDatabase, cancellationToken);
             }
             catch (NpgsqlException ex)
             {
@@ -116,6 +119,55 @@ public static class SetupEndpoints
             return Results.Ok(new { message = "Configuration saved and database migrations applied." });
         })
         .WithName("BootstrapSetup");
+    }
+
+    private static DatabaseBootstrapOptions BuildBootstrapDatabaseOptions(
+        DatabaseBootstrapOptions requestDatabase,
+        IConfiguration configuration)
+    {
+        if (!IsBundledDocker(requestDatabase.Mode))
+        {
+            return requestDatabase;
+        }
+
+        var bootstrapPassword = configuration["BUNDLED_POSTGRES_PASSWORD"];
+        if (string.IsNullOrWhiteSpace(bootstrapPassword))
+        {
+            bootstrapPassword = configuration["POSTGRES_PASSWORD"];
+        }
+
+        if (string.IsNullOrWhiteSpace(bootstrapPassword))
+        {
+            return requestDatabase;
+        }
+
+        return new DatabaseBootstrapOptions
+        {
+            Mode = requestDatabase.Mode,
+            Server = requestDatabase.Server,
+            Port = requestDatabase.Port,
+            DatabaseName = requestDatabase.DatabaseName,
+            Username = requestDatabase.Username,
+            Password = bootstrapPassword,
+            SslMode = requestDatabase.SslMode
+        };
+    }
+
+    private static async Task RotateBundledPostgresPasswordAsync(
+        AlertBlurtyDbContext dbContext,
+        DatabaseBootstrapOptions requestedDatabase,
+        DatabaseBootstrapOptions bootstrapDatabase,
+        CancellationToken cancellationToken)
+    {
+        if (!IsBundledDocker(requestedDatabase.Mode)
+            || string.IsNullOrWhiteSpace(requestedDatabase.Password)
+            || string.Equals(requestedDatabase.Password, bootstrapDatabase.Password, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var sql = $"ALTER ROLE {QuoteIdentifier(requestedDatabase.Username)} WITH PASSWORD {QuoteLiteral(requestedDatabase.Password)}";
+        await dbContext.Database.ExecuteSqlRawAsync(sql, cancellationToken);
     }
 
     private static string? ValidateBootstrapRequest(BootstrapSetupRequest request)
@@ -152,8 +204,23 @@ public static class SetupEndpoints
 
     private static bool IsSupportedDatabaseMode(string mode)
     {
-        return string.Equals(mode, "BundledDocker", StringComparison.OrdinalIgnoreCase)
+        return IsBundledDocker(mode)
             || string.Equals(mode, "ExternalPostgres", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsBundledDocker(string mode)
+    {
+        return string.Equals(mode, "BundledDocker", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string QuoteIdentifier(string identifier)
+    {
+        return "\"" + identifier.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
+    }
+
+    private static string QuoteLiteral(string value)
+    {
+        return "'" + value.Replace("'", "''", StringComparison.Ordinal) + "'";
     }
 }
 

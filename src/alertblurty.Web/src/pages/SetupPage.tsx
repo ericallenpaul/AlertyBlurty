@@ -326,7 +326,8 @@ export function SetupPage() {
                         Bundled Docker uses the Compose service name{" "}
                         <code>postgres</code> on internal port <code>5432</code>
                         . Host port mappings are not used for app-to-database
-                        traffic.
+                        traffic. The password you enter below becomes the
+                        application database password during first-run setup.
                       </div>
                     ) : null}
                   </div>

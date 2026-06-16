@@ -60,7 +60,7 @@ ericallenpaul/alertyblurty
 
 Current tags:
 
-- `ericallenpaul/alertyblurty:0.1.6`
+- `ericallenpaul/alertyblurty:0.1.7`
 - `ericallenpaul/alertyblurty:latest`
 
 Use Docker Compose for the bundled PostgreSQL install. Running the image directly with `docker run` starts only the AlertyBlurty app container, so choose `Existing PostgreSQL server` in setup unless you provide a separate PostgreSQL container.
@@ -90,6 +90,7 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ALERTYBLURTY_PORT: 18080
       ALERTYBLURTY_CONFIG_PATH: /app/data/appsettings.Local.json
+      BUNDLED_POSTGRES_PASSWORD: alertyblurty-bootstrap-change-me
     volumes:
       - alertyblurty-data:/app/data
 
@@ -99,7 +100,7 @@ services:
     environment:
       POSTGRES_DB: alertyblurty
       POSTGRES_USER: alerty_app
-      POSTGRES_PASSWORD: change-this-postgres-password
+      POSTGRES_PASSWORD: alertyblurty-bootstrap-change-me
     volumes:
       - alertyblurty-postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -113,7 +114,7 @@ volumes:
   alertyblurty-postgres-data:
 ```
 
-For production use, copy `.env.example` to `.env`, set a strong `POSTGRES_PASSWORD`, and run the repository-provided `docker-compose.yml`.
+For production use, copy `.env.example` to `.env` if you want to override ports, image tags, Twilio defaults, or the internal bundled PostgreSQL bootstrap password. In bundled mode, the first-run wizard password becomes the application database password.
 
 ## Install From Source
 
@@ -370,7 +371,7 @@ dotnet publish -c Release -o out
 
 ```bash
 docker build -t alertyblurty:local .
-docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.6
+docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.7
 docker tag alertyblurty:local ericallenpaul/alertyblurty:latest
 ```
 

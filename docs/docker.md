@@ -18,7 +18,7 @@ cd AlertyBlurty
 cp .env.example .env
 ```
 
-Edit `.env` and set at least:
+Edit `.env` if you want to change the published web port, image tag, Twilio defaults, or the internal bundled PostgreSQL bootstrap password:
 
 ```dotenv
 POSTGRES_PASSWORD=replace-with-a-strong-password
@@ -64,7 +64,7 @@ Username: alerty_app
 SSL mode: Disable
 ```
 
-Use the same database password you set as `POSTGRES_PASSWORD` in `.env`.
+Enter the database password you want AlertyBlurty to use. For bundled Docker PostgreSQL, setup connects with the internal bootstrap password and then changes the bundled database user to the password you enter in the wizard.
 
 ## External PostgreSQL
 
@@ -175,8 +175,8 @@ Use semantic version tags for every published image and update `latest` to the s
 ```powershell
 docker login
 docker build -t alertyblurty:local .
-docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.6
+docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.7
 docker tag alertyblurty:local ericallenpaul/alertyblurty:latest
-docker push ericallenpaul/alertyblurty:0.1.6
+docker push ericallenpaul/alertyblurty:0.1.7
 docker push ericallenpaul/alertyblurty:latest
 ```
