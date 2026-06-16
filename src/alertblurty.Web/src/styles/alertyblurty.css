@@ -519,6 +519,18 @@ h2,
     font-weight: 700;
 }
 
+.configured-field-status {
+    align-items: center;
+    background-color: #f7f1e6;
+    border-color: var(--alerty-border);
+    color: var(--alerty-muted);
+    display: flex;
+}
+
+.configured-field-status .bi {
+    color: #287d3c;
+}
+
 .badge-alerty {
     background-color: #eee8db;
     color: var(--alerty-ink);
@@ -614,6 +626,15 @@ h2,
 :root[data-theme="dark"] .form-select:disabled {
     background-color: #181410;
     color: #988875;
+}
+
+:root[data-theme="dark"] .configured-field-status {
+    background-color: #181410;
+    color: #b7a58f;
+}
+
+:root[data-theme="dark"] .configured-field-status .bi {
+    color: #82c879;
 }
 
 :root[data-theme="dark"] .modal-content,

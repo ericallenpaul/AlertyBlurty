@@ -384,7 +384,12 @@ export function SetupPage() {
                         tooltip="JWT Secret signs login tokens and must be at least 32 characters."
                         value={jwtSecret}
                       />
-                    ) : null}
+                    ) : (
+                      <ConfiguredFieldStatus
+                        label="JWT Secret"
+                        message="Configured from environment or saved setup."
+                      />
+                    )}
                   </div>
                   <h2 className="h5 mt-4">Twilio</h2>
                   <div className="row">
@@ -609,6 +614,24 @@ function Field({
         type={type}
         value={value}
       />
+    </div>
+  );
+}
+
+function ConfiguredFieldStatus({
+  label,
+  message,
+}: {
+  label: string;
+  message: string;
+}) {
+  return (
+    <div className="col-md-6 mb-3">
+      <div className="form-label">{label}</div>
+      <div className="form-control configured-field-status" role="status">
+        <i aria-hidden="true" className="bi bi-check-circle-fill me-2" />
+        {message}
+      </div>
     </div>
   );
 }
