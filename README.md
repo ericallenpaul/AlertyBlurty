@@ -30,7 +30,9 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Open `http://localhost:8080` and complete the first-run setup wizard. Choose `Bundled Docker PostgreSQL` to use the included PostgreSQL service, or `Existing PostgreSQL server` to connect to your own database.
+Open `http://localhost:18080` and complete the first-run setup wizard. Choose `Bundled Docker PostgreSQL` to use the included PostgreSQL service, or `Existing PostgreSQL server` to connect to your own database.
+
+The Docker host port is set by `ALERTYBLURTY_PORT` in `.env` before startup. The first-run wizard cannot change it because Docker publishes ports before the app starts.
 
 The app image is published as:
 

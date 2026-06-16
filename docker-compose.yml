@@ -8,7 +8,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "${ALERTYBLURTY_PORT:-8080}:8080"
+      - "${ALERTYBLURTY_PORT:-18080}:8080"
     environment:
       ASPNETCORE_URLS: http://+:8080
       ALERTYBLURTY_CONFIG_PATH: ${ALERTYBLURTY_CONFIG_PATH:-/app/data/appsettings.Local.json}

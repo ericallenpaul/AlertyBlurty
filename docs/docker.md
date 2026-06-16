@@ -22,6 +22,14 @@ Edit `.env` and set at least:
 POSTGRES_PASSWORD=replace-with-a-strong-password
 ```
 
+The default host port is `18080`:
+
+```dotenv
+ALERTYBLURTY_PORT=18080
+```
+
+Change this before `docker compose up -d` if that port is already in use. The first-run wizard cannot choose or change the host port because Docker publishes ports before AlertyBlurty starts. Inside the container, the app always listens on port `8080`.
+
 Then start the stack:
 
 ```bash
@@ -31,7 +39,7 @@ docker compose up -d
 Open:
 
 ```text
-http://localhost:8080
+http://localhost:18080
 ```
 
 Use the first-run wizard. Choose `Bundled Docker PostgreSQL` for the database mode. The default database values are:
@@ -118,7 +126,7 @@ docker run --rm -v alertyblurty_alertyblurty-data:/data -v "$PWD:/backup" alpine
 After setup, create teams and schedules in AlertyBlurty, then configure a Zabbix webhook media type pointing at the generated team webhook URL:
 
 ```text
-http://<alertyblurty-host>:8080/api/webhooks/zabbix/<team-id>
+http://<alertyblurty-host>:18080/api/webhooks/zabbix/<team-id>
 ```
 
 Twilio requires:
@@ -133,7 +141,7 @@ The local Zabbix/Twilio smoke test can target the Dockerized app by passing the 
 
 ```powershell
 $env:SMOKE_ZABBIX_TWILIO_ENABLED = 'true'
-.\scripts\smoke-local-zabbix-twilio.ps1 -RunLive -ApiBaseUrl http://127.0.0.1:8080 -WebhookBaseUrl http://<docker-host-lan-ip>:8080
+.\scripts\smoke-local-zabbix-twilio.ps1 -RunLive -ApiBaseUrl http://127.0.0.1:18080 -WebhookBaseUrl http://<docker-host-lan-ip>:18080
 ```
 
 ## Manual Docker Hub Publish
@@ -148,4 +156,3 @@ docker tag alertyblurty:local ericallenpaul/alertyblurty:latest
 docker push ericallenpaul/alertyblurty:0.1.0
 docker push ericallenpaul/alertyblurty:latest
 ```
-

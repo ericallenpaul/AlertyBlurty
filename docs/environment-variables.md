@@ -66,6 +66,7 @@ Example:
 ## Optional Variables
 
 - `ALERTYBLURTY_CONFIG_PATH`: path for wizard-saved local configuration. Default: `src/alertblurty.Api/data/appsettings.Local.json` when running from source.
+- `ALERTYBLURTY_PORT`: Docker Compose host port for the web UI and API. Default: `18080`. The setup wizard cannot change this because Docker publishes ports before the app starts.
 - `ASPNETCORE_ENVIRONMENT`: `Development`, `Staging`, or `Production`.
 - `ASPNETCORE_URLS`: URLs the API listens on, such as `http://+:8080`.
 - `VITE_API_BASE_URL`: React dev/build API base URL. Leave empty when serving from the same origin or using the Vite proxy.
