@@ -36,6 +36,16 @@ Then start the stack:
 docker compose up -d
 ```
 
+Or use the helper script, which starts Compose and prints the URL:
+
+```powershell
+.\scripts\start-docker.ps1
+```
+
+```bash
+./scripts/start-docker.sh
+```
+
 Open:
 
 ```text
@@ -61,6 +71,16 @@ Use the app-only compose file when PostgreSQL is managed somewhere else:
 ```bash
 cp .env.example .env
 docker compose -f docker-compose.external-db.yml up -d
+```
+
+Helper script options:
+
+```powershell
+.\scripts\start-docker.ps1 -ExternalDatabase
+```
+
+```bash
+./scripts/start-docker.sh --external-db
 ```
 
 In the first-run wizard, choose `Existing PostgreSQL server`, enter your database host, port, database name, username, password, and SSL mode. `Prefer` is the default SSL mode for external PostgreSQL.
@@ -148,11 +168,13 @@ $env:SMOKE_ZABBIX_TWILIO_ENABLED = 'true'
 
 Publishing is manual for now. Do not add GitHub Actions for this milestone.
 
+Use semantic version tags for every published image and update `latest` to the same digest. Patch releases such as `0.1.1` are appropriate for packaging and documentation changes.
+
 ```powershell
 docker login
 docker build -t alertyblurty:local .
-docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.0
+docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.1
 docker tag alertyblurty:local ericallenpaul/alertyblurty:latest
-docker push ericallenpaul/alertyblurty:0.1.0
+docker push ericallenpaul/alertyblurty:0.1.1
 docker push ericallenpaul/alertyblurty:latest
 ```

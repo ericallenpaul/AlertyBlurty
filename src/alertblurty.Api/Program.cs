@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -73,6 +74,10 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+var dataProtectionPath = Path.Combine(builder.Environment.ContentRootPath, "data", "DataProtection-Keys");
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionPath));
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
@@ -128,7 +133,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
@@ -154,6 +162,20 @@ app.MapIncidentEndpoints();
 app.MapWebhookEndpoints();
 app.MapFallbackToFile("index.html");
 
+LogStartupInstructions(app);
+
 app.Run();
+
+static void LogStartupInstructions(WebApplication app)
+{
+    var configuredHostPort = app.Configuration["ALERTYBLURTY_PORT"];
+    var hostPort = int.TryParse(configuredHostPort, out var parsedPort) && parsedPort is > 0 and <= 65535
+        ? parsedPort
+        : 18080;
+
+    app.Logger.LogInformation(
+        "AlertyBlurty is running. If using Docker Compose defaults, open http://localhost:{HostPort} and complete first-run setup. If ALERTYBLURTY_PORT or a reverse proxy is configured, use that public URL instead.",
+        hostPort);
+}
 
 public partial class Program;

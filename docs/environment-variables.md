@@ -82,6 +82,8 @@ docker compose up -d
 
 See `docs/docker.md` for Docker Compose, external PostgreSQL, backup, upgrade, and Docker Hub publishing instructions.
 
+The helper scripts `scripts/start-docker.ps1` and `scripts/start-docker.sh` start Compose and print the URL based on `ALERTYBLURTY_PORT`.
+
 ## First-Run Wizard
 
 The wizard stores supplied database, JWT, and Twilio values in an ignored local config file and then initializes the blank database with EF migrations.

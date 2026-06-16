@@ -34,6 +34,20 @@ Open `http://localhost:18080` and complete the first-run setup wizard. Choose `B
 
 The Docker host port is set by `ALERTYBLURTY_PORT` in `.env` before startup. The first-run wizard cannot change it because Docker publishes ports before the app starts.
 
+On Windows, you can use the helper script instead:
+
+```powershell
+.\scripts\start-docker.ps1
+```
+
+On Linux or macOS:
+
+```bash
+./scripts/start-docker.sh
+```
+
+The helper starts Docker Compose and prints the URL to open.
+
 The app image is published as:
 
 ```text
@@ -295,7 +309,7 @@ dotnet publish -c Release -o out
 
 ```bash
 docker build -t alertyblurty:local .
-docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.0
+docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.1
 docker tag alertyblurty:local ericallenpaul/alertyblurty:latest
 ```
 
