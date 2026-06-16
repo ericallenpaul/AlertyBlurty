@@ -94,7 +94,9 @@ public static class SetupEndpoints
             }
             catch (NpgsqlException ex)
             {
-                var message = string.Equals(request.Database.Mode, "BundledDocker", StringComparison.OrdinalIgnoreCase)
+                var message = string.Equals(ex.SqlState, PostgresErrorCodes.InvalidPassword, StringComparison.Ordinal)
+                    ? $"PostgreSQL rejected the password for user \"{request.Database.Username}\". Use the same password configured for the bundled database, or update the PostgreSQL user password."
+                    : string.Equals(request.Database.Mode, "BundledDocker", StringComparison.OrdinalIgnoreCase)
                     ? "Could not connect to bundled Docker PostgreSQL. Start AlertyBlurty with docker compose so the postgres service is available, or choose Existing PostgreSQL server."
                     : $"Could not connect to PostgreSQL at {request.Database.Server}:{request.Database.Port}. Check the server, port, database, username, password, and SSL mode.";
 

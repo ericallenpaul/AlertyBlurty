@@ -175,8 +175,8 @@ Use semantic version tags for every published image and update `latest` to the s
 ```powershell
 docker login
 docker build -t alertyblurty:local .
-docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.5
+docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.6
 docker tag alertyblurty:local ericallenpaul/alertyblurty:latest
-docker push ericallenpaul/alertyblurty:0.1.5
+docker push ericallenpaul/alertyblurty:0.1.6
 docker push ericallenpaul/alertyblurty:latest
 ```
