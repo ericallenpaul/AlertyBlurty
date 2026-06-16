@@ -318,12 +318,14 @@ export function SetupPage() {
                       id="databaseServer"
                       label="Server *"
                       onChange={setDatabaseServer}
+                      placeholder="postgres"
                       value={databaseServer}
                     />
                     <Field
                       id="databasePort"
                       label="Port *"
                       onChange={setDatabasePort}
+                      placeholder="5432"
                       type="number"
                       value={databasePort}
                     />
@@ -333,21 +335,23 @@ export function SetupPage() {
                       id="databaseName"
                       label="Database Name *"
                       onChange={setDatabaseName}
+                      placeholder="alertyblurty"
                       value={databaseName}
                     />
                     <Field
                       id="databaseUsername"
                       label="Username *"
                       onChange={setDatabaseUsername}
+                      placeholder="alerty_app"
                       value={databaseUsername}
                     />
                   </div>
                   <div className="row">
-                    <Field
+                    <PasswordField
                       id="databasePassword"
                       label="Password *"
                       onChange={setDatabasePassword}
-                      type="password"
+                      placeholder="PostgreSQL password"
                       value={databasePassword}
                     />
                     {databaseMode === "ExternalPostgres" ? (
@@ -372,11 +376,12 @@ export function SetupPage() {
                       </div>
                     ) : null}
                     {!jwtConfigured ? (
-                      <Field
+                      <PasswordField
                         id="jwtSecret"
                         label="JWT Secret *"
                         onChange={setJwtSecret}
-                        type="password"
+                        placeholder="At least 32 characters"
+                        tooltip="JWT Secret signs login tokens and must be at least 32 characters."
                         value={jwtSecret}
                       />
                     ) : null}
@@ -387,13 +392,14 @@ export function SetupPage() {
                       id="twilioAccountSid"
                       label="Account SID *"
                       onChange={setTwilioAccountSid}
+                      placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                       value={twilioAccountSid}
                     />
-                    <Field
+                    <PasswordField
                       id="twilioAuthToken"
                       label="Auth Token *"
                       onChange={setTwilioAuthToken}
-                      type="password"
+                      placeholder="Twilio auth token"
                       value={twilioAuthToken}
                     />
                   </div>
@@ -402,6 +408,7 @@ export function SetupPage() {
                       id="twilioPhoneNumber"
                       label="Phone Number *"
                       onChange={setTwilioPhoneNumber}
+                      placeholder="+15551234567"
                       type="tel"
                       value={twilioPhoneNumber}
                     />
@@ -470,29 +477,31 @@ export function SetupPage() {
                       id="fullName"
                       label="Full Name *"
                       onChange={setFullName}
+                      placeholder="Jane Smith"
                       value={fullName}
                     />
                     <Field
                       id="email"
                       label="Email *"
                       onChange={setEmail}
+                      placeholder="jane@example.com"
                       type="email"
                       value={email}
                     />
                   </div>
                   <div className="row">
-                    <Field
+                    <PasswordField
                       id="password"
                       label="Password *"
                       onChange={setPassword}
-                      type="password"
+                      placeholder="At least 8 characters"
                       value={password}
                     />
-                    <Field
+                    <PasswordField
                       id="confirmPassword"
                       label="Confirm Password *"
                       onChange={setConfirmPassword}
-                      type="password"
+                      placeholder="Re-enter password"
                       value={confirmPassword}
                     />
                   </div>
@@ -501,6 +510,7 @@ export function SetupPage() {
                       id="phoneNumber"
                       label="Phone Number *"
                       onChange={setPhoneNumber}
+                      placeholder="+15551234567"
                       type="tel"
                       value={phoneNumber}
                     />
@@ -575,12 +585,14 @@ function Field({
   id,
   label,
   onChange,
+  placeholder,
   type = "text",
   value,
 }: {
   id: string;
   label: string;
   onChange: (value: string) => void;
+  placeholder?: string;
   type?: string;
   value: string;
 }) {
@@ -593,9 +605,63 @@ function Field({
         className="form-control"
         id={id}
         onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
         type={type}
         value={value}
       />
+    </div>
+  );
+}
+
+function PasswordField({
+  id,
+  label,
+  onChange,
+  placeholder,
+  tooltip,
+  value,
+}: {
+  id: string;
+  label: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  tooltip?: string;
+  value: string;
+}) {
+  const [isRevealed, setIsRevealed] = useState(false);
+
+  return (
+    <div className="col-md-6 mb-3">
+      <label className="form-label" htmlFor={id}>
+        {label}
+        {tooltip ? (
+          <span className="ms-2" title={tooltip}>
+            <i aria-hidden="true" className="bi bi-info-circle" />
+            <span className="visually-hidden">{tooltip}</span>
+          </span>
+        ) : null}
+      </label>
+      <div className="input-group">
+        <input
+          className="form-control"
+          id={id}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          type={isRevealed ? "text" : "password"}
+          value={value}
+        />
+        <button
+          aria-label={isRevealed ? "Hide password" : "Show password"}
+          className="btn btn-outline-secondary"
+          onClick={() => setIsRevealed((current) => !current)}
+          type="button"
+        >
+          <i
+            aria-hidden="true"
+            className={isRevealed ? "bi bi-eye-slash" : "bi bi-eye"}
+          />
+        </button>
+      </div>
     </div>
   );
 }

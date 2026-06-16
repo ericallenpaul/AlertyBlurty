@@ -87,8 +87,27 @@ public static class SetupEndpoints
                 .UseNpgsql(connectionString)
                 .Options;
 
-            await using var dbContext = new AlertBlurtyDbContext(dbOptions);
-            await dbContext.Database.MigrateAsync(cancellationToken);
+            try
+            {
+                await using var dbContext = new AlertBlurtyDbContext(dbOptions);
+                await dbContext.Database.MigrateAsync(cancellationToken);
+            }
+            catch (NpgsqlException ex)
+            {
+                var message = string.Equals(request.Database.Mode, "BundledDocker", StringComparison.OrdinalIgnoreCase)
+                    ? "Could not connect to bundled Docker PostgreSQL. Start AlertyBlurty with docker compose so the postgres service is available, or choose Existing PostgreSQL server."
+                    : $"Could not connect to PostgreSQL at {request.Database.Server}:{request.Database.Port}. Check the server, port, database, username, password, and SSL mode.";
+
+                return Results.BadRequest(new { message, detail = ex.Message });
+            }
+            catch (Exception ex) when (ex is TimeoutException || ex.InnerException is NpgsqlException)
+            {
+                return Results.BadRequest(new
+                {
+                    message = "Could not initialize PostgreSQL. Check the database connection settings and try again.",
+                    detail = ex.InnerException?.Message ?? ex.Message
+                });
+            }
 
             await configuration.SaveAsync(snapshot, cancellationToken);
 

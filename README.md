@@ -60,8 +60,10 @@ ericallenpaul/alertyblurty
 
 Current tags:
 
-- `ericallenpaul/alertyblurty:0.1.1`
+- `ericallenpaul/alertyblurty:0.1.2`
 - `ericallenpaul/alertyblurty:latest`
+
+Use Docker Compose for the bundled PostgreSQL install. Running the image directly with `docker run` starts only the AlertyBlurty app container, so choose `Existing PostgreSQL server` in setup unless you provide a separate PostgreSQL container.
 
 See [Docker Self-Hosting](docs/docker.md) for `.env` values, external PostgreSQL, backups, upgrades, and manual Docker Hub publishing.
 
@@ -368,7 +370,7 @@ dotnet publish -c Release -o out
 
 ```bash
 docker build -t alertyblurty:local .
-docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.1
+docker tag alertyblurty:local ericallenpaul/alertyblurty:0.1.2
 docker tag alertyblurty:local ericallenpaul/alertyblurty:latest
 ```
 
