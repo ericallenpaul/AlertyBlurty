@@ -79,16 +79,29 @@ export function SetupPage() {
     setError(null);
 
     try {
+      const database =
+        databaseMode === "BundledDocker"
+          ? {
+              mode: databaseMode,
+              server: "postgres",
+              port: 5432,
+              databaseName: "alertyblurty",
+              username: "alerty_app",
+              password: databasePassword,
+              sslMode: "Disable" as PostgresSslMode,
+            }
+          : {
+              mode: databaseMode,
+              server: databaseServer.trim(),
+              port: Number(databasePort),
+              databaseName: databaseName.trim(),
+              username: databaseUsername.trim(),
+              password: databasePassword,
+              sslMode: databaseSslMode,
+            };
+
       await bootstrapSetup({
-        database: {
-          mode: databaseMode,
-          server: databaseServer.trim(),
-          port: Number(databasePort),
-          databaseName: databaseName.trim(),
-          username: databaseUsername.trim(),
-          password: databasePassword,
-          sslMode: databaseSslMode,
-        },
+        database,
         twilio: {
           accountSid: twilioAccountSid.trim(),
           authToken: twilioAuthToken,
@@ -101,9 +114,7 @@ export function SetupPage() {
       setStep(2);
     } catch (submitError) {
       setError(
-        submitError instanceof Error
-          ? `Error: ${submitError.message}`
-          : "Error: Failed to save system configuration.",
+        getErrorMessage(submitError, "Failed to save system configuration."),
       );
     } finally {
       setIsSubmitting(false);
@@ -139,11 +150,7 @@ export function SetupPage() {
 
       setStep(4);
     } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? `Error: ${submitError.message}`
-          : "Error: Failed to create organization.",
-      );
+      setError(getErrorMessage(submitError, "Failed to create organization."));
     } finally {
       setIsSubmitting(false);
     }
@@ -151,10 +158,11 @@ export function SetupPage() {
 
   function validateSystemConfiguration() {
     if (
-      !databaseServer.trim() ||
-      !databasePort.trim() ||
-      !databaseName.trim() ||
-      !databaseUsername.trim() ||
+      (databaseMode === "ExternalPostgres" &&
+        (!databaseServer.trim() ||
+          !databasePort.trim() ||
+          !databaseName.trim() ||
+          !databaseUsername.trim())) ||
       !databasePassword ||
       !twilioAccountSid.trim() ||
       !twilioAuthToken ||
@@ -163,7 +171,8 @@ export function SetupPage() {
       return "Please fill in all system configuration fields.";
     }
 
-    const parsedPort = Number(databasePort);
+    const parsedPort =
+      databaseMode === "BundledDocker" ? 5432 : Number(databasePort);
     if (!Number.isInteger(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
       return "Database port must be between 1 and 65535.";
     }
@@ -312,11 +321,20 @@ export function SetupPage() {
                         </span>
                       </label>
                     </div>
+                    {databaseMode === "BundledDocker" ? (
+                      <div className="form-text">
+                        Bundled Docker uses the Compose service name{" "}
+                        <code>postgres</code> on internal port <code>5432</code>
+                        . Host port mappings are not used for app-to-database
+                        traffic.
+                      </div>
+                    ) : null}
                   </div>
                   <div className="row">
                     <Field
                       id="databaseServer"
                       label="Server *"
+                      disabled={databaseMode === "BundledDocker"}
                       onChange={setDatabaseServer}
                       placeholder="postgres"
                       value={databaseServer}
@@ -324,6 +342,7 @@ export function SetupPage() {
                     <Field
                       id="databasePort"
                       label="Port *"
+                      disabled={databaseMode === "BundledDocker"}
                       onChange={setDatabasePort}
                       placeholder="5432"
                       type="number"
@@ -334,6 +353,7 @@ export function SetupPage() {
                     <Field
                       id="databaseName"
                       label="Database Name *"
+                      disabled={databaseMode === "BundledDocker"}
                       onChange={setDatabaseName}
                       placeholder="alertyblurty"
                       value={databaseName}
@@ -341,6 +361,7 @@ export function SetupPage() {
                     <Field
                       id="databaseUsername"
                       label="Username *"
+                      disabled={databaseMode === "BundledDocker"}
                       onChange={setDatabaseUsername}
                       placeholder="alerty_app"
                       value={databaseUsername}
@@ -587,6 +608,7 @@ export function SetupPage() {
 }
 
 function Field({
+  disabled = false,
   id,
   label,
   onChange,
@@ -594,6 +616,7 @@ function Field({
   type = "text",
   value,
 }: {
+  disabled?: boolean;
   id: string;
   label: string;
   onChange: (value: string) => void;
@@ -608,6 +631,7 @@ function Field({
       </label>
       <input
         className="form-control"
+        disabled={disabled}
         id={id}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
@@ -616,6 +640,29 @@ function Field({
       />
     </div>
   );
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof error.response === "object" &&
+    error.response !== null &&
+    "data" in error.response &&
+    typeof error.response.data === "object" &&
+    error.response.data !== null &&
+    "message" in error.response.data &&
+    typeof error.response.data.message === "string"
+  ) {
+    return `Error: ${error.response.data.message}`;
+  }
+
+  if (error instanceof Error) {
+    return `Error: ${error.message}`;
+  }
+
+  return `Error: ${fallback}`;
 }
 
 function ConfiguredFieldStatus({
